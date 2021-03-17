@@ -3,7 +3,6 @@ from db.models import User, History
 
 def create_user(id_: int, name: str, username: str, status: str = 'main_menu', role: str = 'user') -> dict:
     u = User.create(id=id_, name=name, username=username, status=status, role=role)
-    return u.get_as_dict()
 
 
 def get_user(id: int) -> dict:
