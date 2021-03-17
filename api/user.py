@@ -1,8 +1,8 @@
 from db.models import User, History
 
 
-def create_user(name: str, username: str, status: str = 'main_menu', role: str = 'user') -> dict:
-    u = User.create(name=name, username=username, status=status, role=role)
+def create_user(id_: int, name: str, username: str, status: str = 'main_menu', role: str = 'user') -> dict:
+    u = User.create(id=id_, name=name, username=username, status=status, role=role)
     return u.get_as_dict()
 
 
@@ -19,6 +19,14 @@ def get_user_by_username(username: str) -> dict:
 def is_admin(id: int) -> bool:
     u = User.get(id=id)
     return u.role == 'admin'
+
+
+def is_exists(id: int) -> bool:
+    try:
+        User.get(id=id)
+    except User.DoesNotExist:
+        return False
+    return True
 
 
 def is_verified(id: int) -> bool:
