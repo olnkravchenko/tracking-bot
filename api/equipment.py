@@ -7,14 +7,15 @@ from random import choice
 def add_equipment(
     category_id: int,
     name: str,
-    holder: int = 1,
+    owner: int = 1,
     description: str = "",
     qr_code_version: int = 2,
 ):
     control = "".join([choice(ascii_letters) for _ in range(6)])
     eq = Equipment.create(
         name=name,
-        holder=holder,
+        holder=owner,
+        owner=owner,
         description=description,
         category=Category.get(id=category_id),
         control=control,
@@ -34,6 +35,11 @@ def get_equipment(id: int) -> dict:
 def get_holder(id: int) -> dict:
     eq = Equipment.get(id=id)
     return eq.holder.get_as_dict()
+
+
+def get_owner(id: int) -> dict:
+    eq = Equipment.get(id=id)
+    return eq.owner.get_as_dict()
 
 
 def delete_equipment(id: int) -> bool:
