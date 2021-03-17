@@ -15,7 +15,6 @@ class BaseModel(Model):
 class User(BaseModel):
     name = TextField()
     username = TextField()
-    status = TextField()
     role = TextField()
 
 
@@ -26,6 +25,7 @@ class Category(BaseModel):
 class Equipment(BaseModel):
     name = TextField()
     holder = ForeignKeyField(User, backref='equipment')
+    owner = ForeignKeyField(User, backref='owned_equipment')
     category = ForeignKeyField(Category, backref='equipment')
     description = TextField()
     control = TextField()

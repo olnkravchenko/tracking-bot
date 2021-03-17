@@ -42,18 +42,6 @@ def get_user_equipment(id: int) -> list:
     return res
 
 
-def set_user_status(id: int, status: str) -> str:
-    u = User.get(id=id)
-    u.status = status
-    u.save()
-    return status
-
-
-def get_user_status(id: int) -> str:
-    u = User.get(id=id)
-    return u.status
-
-
 def get_admin_list() -> list:
     res = []
     for admin in User.select().where(User.role == 'admin'):
