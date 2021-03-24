@@ -33,4 +33,8 @@ def get_equipment_history(equipment_id: int, count: int = 20) -> list:
     return res
 
 
-
+def get_last_actions(count: int) -> list:
+    res = []
+    for row in History.select().limit(count):
+        res.append(row.get_as_dict())
+    return res
