@@ -30,5 +30,11 @@ def get_equipment_history_by_date(equipemnt_id: int, start_day: int, start_month
     return [row.get_as_dict() for row in History.select().where((History.equipment == eq) & (date(day=start_day, month=start_month, year=start_year) <= History.date <= date(day=end_day, month=end_month, year=end_year)))]
 
 
+def get_history_by_period(start_day: int, start_month: int, start_year: int, end_day: int, end_month: int, end_year: int) -> list:
+    eq = Equipment.get(id=equipemnt_id)
+    return [row.get_as_dict() for row in History.select().where(date(day=start_day, month=start_month, year=start_year) <= History.date <= date(day=end_day, month=end_month, year=end_year))]
+
+
+
 def get_last_actions(count: int) -> list:
     return [row.get_as_dict() for row in History.select().limit(count)]
