@@ -1,7 +1,8 @@
-from db.models import Equipment, Category
+from db.models import Equipment, Category, User
 from .qr_code import new_qr_code
 from string import ascii_letters
 from random import choice
+from .exceptions import *
 
 
 def add_equipment(
@@ -12,14 +13,19 @@ def add_equipment(
     qr_code_version: int = 2,
 ):
     control = "".join([choice(ascii_letters) for _ in range(6)])
-    eq = Equipment.create(
-        name=name,
-        holder=owner,
-        owner=owner,
-        description=description,
-        category=Category.get(id=category_id),
-        control=control,
-    )
+    try:
+        eq = Equipment.create(
+            name=name,
+            holder=User.get(id=owner),
+            owner=User.get(id=owner),
+            description=description,
+            category=Category.get(id=category_id),
+            control=control,
+        )
+    except User.DoesNotExist:
+        raise UserDoesNotExists(f'User with id {owner} does not exists')
+    except Category.DoesNotExist:
+        raise CategoryDoesNotExists(f'Category with id {category_id} does not exists')
     filename = f"{eq.id}_qr.png"
     new_qr_code(
         data_=f"{eq.id} {control}", ver=qr_code_version, size=qr_code_version, filename=filename
@@ -28,15 +34,23 @@ def add_equipment(
 
 
 def get_equipment(id: int) -> dict:
-    return Equipment.get(id=id).get_as_dict()
-
+    try:
+        return Equipment.get(id=id).get_as_dict()
+    except Equipment.DoesNotExist:
+        raise EquipmentDoesNotExists(f'Equipment with id {id} does not exists')
 
 def get_holder(id: int) -> dict:
-    return Equipment.get(id=id).holder.get_as_dict()
+    try:
+        return Equipment.get(id=id).holder.get_as_dict()
+    except Equipment.DoesNotExist:
+        raise EquipmentDoesNotExists(f'Equipment with id {id} does not exists')
 
 
 def get_owner(id: int) -> dict:
-    return Equipment.get(id=id).owner.get_as_dict()
+    try:
+        return Equipment.get(id=id).owner.get_as_dict()
+    except Equipment.DoesNotExist:
+        raise EquipmentDoesNotExists(f'Equipment with id {id} does not exists.')
 
 
 def delete_equipment(id: int) -> bool:
@@ -45,18 +59,27 @@ def delete_equipment(id: int) -> bool:
 
 
 def change_equipment_description(id: int, new_description: str) -> bool:
-    eq = Equipment.get(id=id)
+    try:
+        eq = Equipment.get(id=id)
+    except Equipment.DoesNotExist:
+        raise EquipmentDoesNotExists(f'Equipment with id {id} does not exists')
     eq.description = new_description
     eq.save()
     return True
 
 
 def change_equipment_category(id: int, new_category: int) -> bool:
-    eq = Equipment.get(id=id)
+    try:
+        eq = Equipment.get(id=id)
+    except Equipment.DoesNotExist:
+        raise EquipmentDoesNotExists(f'Equipment with id {id} does not exists')
     eq.category = Category.get(id=new_category)
     eq.save()
     return True
 
 
 def validate_control_sum(id: int, sum: str) -> bool:
-    return sum == Equipment.get(id=id).control
+    try:
+        return sum == Equipment.get(id=id).control
+    except Equipment.DoesNotExist:
+        raise EquipmentDoesNotExists(f'Equipment with id {id} does not exists')

@@ -3,3 +3,4 @@ tracking_bot
 test.py
 config.py
 .idea/
+venv/

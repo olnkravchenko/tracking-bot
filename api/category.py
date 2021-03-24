@@ -1,4 +1,5 @@
 from db.models import Category
+from .exceptions import *
 
 
 def create_category(name: str):
@@ -11,7 +12,11 @@ def delete_category(id: int) -> bool:
 
 
 def get_category_equipment(id: int) -> list:
-    return [eq.get_as_dict() for eq in Category.get(id=id).equipment]
+    try:
+        return [eq.get_as_dict() for eq in Category.get(id=id).equipment]
+    except Category.DoesNotExist:
+        raise CategoryDoesNotExists(f'Category with id {id} does not exists')
+
 
 
 def get_all_categories() -> list:
