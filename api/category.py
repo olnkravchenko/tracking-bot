@@ -11,10 +11,7 @@ def delete_category(id: int) -> bool:
 
 
 def get_category_equipment(id: int) -> list:
-    res = []
-    for eq in Category.get(id=id).equipment:
-        res.append(eq.get_as_dict())
-    return res
+    return [eq.get_as_dict() for eq in Category.get(id=id).equipment]
 
 
 def get_all_categories() -> list:

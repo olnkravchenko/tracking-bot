@@ -28,18 +28,15 @@ def add_equipment(
 
 
 def get_equipment(id: int) -> dict:
-    eq = Equipment.get(id=id)
-    return eq.get_as_dict()
+    return Equipment.get(id=id).get_as_dict()
 
 
 def get_holder(id: int) -> dict:
-    eq = Equipment.get(id=id)
-    return eq.holder.get_as_dict()
+    return Equipment.get(id=id).holder.get_as_dict()
 
 
 def get_owner(id: int) -> dict:
-    eq = Equipment.get(id=id)
-    return eq.owner.get_as_dict()
+    return Equipment.get(id=id).owner.get_as_dict()
 
 
 def delete_equipment(id: int) -> bool:
@@ -62,5 +59,4 @@ def change_equipment_category(id: int, new_category: int) -> bool:
 
 
 def validate_control_sum(id: int, sum: str) -> bool:
-    eq = Equipment.get(id=id)
-    return sum == eq.control
+    return sum == Equipment.get(id=id).control

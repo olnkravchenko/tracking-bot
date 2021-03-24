@@ -6,18 +6,15 @@ def create_user(id_: int, name: str, username: str, status: str = 'main_menu', r
 
 
 def get_user(id: int) -> dict:
-    u = User.get(id=id)
-    return u.get_as_dict()
+    return User.get(id=id).get_as_dict()
 
 
 def get_user_by_username(username: str) -> dict:
-    u = User.get(username=username)
-    return u.get_as_dict()
+    return User.get(username=username).get_as_dict()
 
 
 def is_admin(id: int) -> bool:
-    u = User.get(id=id)
-    return u.role == 'admin'
+    return User.get(id=id).role == 'admin'
 
 
 def is_exists(id: int) -> bool:
@@ -29,8 +26,7 @@ def is_exists(id: int) -> bool:
 
 
 def is_verified(id: int) -> bool:
-    u = User.get(id=id)
-    return u.role in ['member', 'admin']
+    return User.get(id=id).role in ['member', 'admin']
 
 
 def verify_user(id: int) -> bool:
@@ -50,7 +46,4 @@ def get_user_equipment(id: int) -> list:
 
 
 def get_admin_list() -> list:
-    res = []
-    for admin in User.select().where(User.role == 'admin'):
-        res.append(admin.get_as_dict())
-    return res
+    return [admin.get_as_dict() for admin in User.select().where(User.role == 'admin')]
