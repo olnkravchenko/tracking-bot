@@ -1,9 +1,8 @@
 from db.models import Category
 
 
-def create_category(name: str) -> dict:
+def create_category(name: str):
     cat = Category.create(name=name)
-    return cat.get_as_dict()
 
 
 def delete_category(id: int) -> bool:
@@ -16,3 +15,7 @@ def get_category_equipment(id: int) -> list:
     for eq in Category.get(id=id).equipment:
         res.append(eq.get_as_dict())
     return res
+
+
+def get_all_categories() -> list:
+    return [cat.get_as_dict() for cat in Category.select()]
