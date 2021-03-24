@@ -1,23 +1,30 @@
 from db.models import User, History
+from .exceptions import *
 
 
 def create_user(id_: int, name: str, username: str, status: str = 'main_menu', role: str = 'user') -> dict:
-    u = User.create(id=id_, name=name, username=username, status=status, role=role)
+    User.create(id=id_, name=name, username=username, status=status, role=role)
 
 
 def get_user(id: int) -> dict:
-    u = User.get(id=id)
-    return u.get_as_dict()
+    try:
+        return User.get(id=id).get_as_dict()
+    except User.DoesNotExist:
+        raise UserDoesNotExists(f'User with id {id} does not exists')
 
 
 def get_user_by_username(username: str) -> dict:
-    u = User.get(username=username)
-    return u.get_as_dict()
+    try:
+        return User.get(username=username).get_as_dict()
+    except User.DoesNotExist:
+        raise UserDoesNotExists(f'User with username {username} does not exists')
 
 
 def is_admin(id: int) -> bool:
-    u = User.get(id=id)
-    return u.role == 'admin'
+    try:
+        return User.get(id=id).role == 'admin'
+    except User.DoesNotExist:
+        raise UserDoesNotExists(f'User with id {id} does not exists')
 
 
 def is_exists(id: int) -> bool:
@@ -29,12 +36,17 @@ def is_exists(id: int) -> bool:
 
 
 def is_verified(id: int) -> bool:
-    u = User.get(id=id)
-    return u.role in ['member', 'admin']
+    try:
+        return User.get(id=id).role in ['member', 'admin']
+    except User.DoesNotExist:
+        raise UserDoesNotExists(f'User with id {id} does not exists')
 
 
 def verify_user(id: int) -> bool:
-    u = User.get(id=id)
+    try:
+        u = User.get(id=id)
+    except User.DoesNotExist:
+        raise UserDoesNotExists(f'User with id {id} does not exists')
     u.role = 'member'
     u.save()
     return True
@@ -42,7 +54,10 @@ def verify_user(id: int) -> bool:
 
 def get_user_equipment(id: int) -> list:
     res = []
-    u = User.get(id=id)
+    try:
+        u = User.get(id=id)
+    except User.DoesNotExist:
+        raise UserDoesNotExists(f'User with id {id} does not exists')
     for eq in u.equipment:
         pick_date = History.select().where(History.equipment == eq).order_by(History.id.desc()).get().date.date()
         res.append({'id': eq.id, 'name': eq.name, 'picked': pick_date})
@@ -50,7 +65,4 @@ def get_user_equipment(id: int) -> list:
 
 
 def get_admin_list() -> list:
-    res = []
-    for admin in User.select().where(User.role == 'admin'):
-        res.append(admin.get_as_dict())
-    return res
+    return [admin.get_as_dict() for admin in User.select().where(User.role == 'admin')]
