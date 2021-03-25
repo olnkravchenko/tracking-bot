@@ -1,6 +1,6 @@
 from db.models import User, Equipment, History
 from datetime import datetime, date
-from .exceptions import *
+from api import exceptions
 
 
 def add_row(equipment_id: int, source_id: int, destination_id: int):
@@ -16,7 +16,7 @@ def get_row(id: int) -> dict:
     try:
         return History.get(id=id).get_as_dict()
     except History.DoesNotExist:
-        raise ActionDoesNotExists(f'Action with id {id} does not exists')
+        raise exceptions.ActionDoesNotExists(f'Action with id {id} does not exists')
 
 
 def get_user_history(user_id: int, count: int = 20) -> list:
@@ -24,7 +24,7 @@ def get_user_history(user_id: int, count: int = 20) -> list:
         user = User.get(id=user_id)
         return [row.get_as_dict() for row in History.select().where((History.source == user) | (History.destination == user)).order_by(History.id.desc()).limit(count)]
     except User.DoesNotExist:
-        raise UserDoesNotExists(f'User with id {user_id} does not exists')
+        raise exceptions.UserDoesNotExists(f'User with id {user_id} does not exists')
 
 
 def get_equipment_history(equipment_id: int, count: int = 20) -> list:
@@ -32,7 +32,7 @@ def get_equipment_history(equipment_id: int, count: int = 20) -> list:
         eq = Equipment.get(id=equipment_id)
         return [row.get_as_dict() for row in History.select().where(History.equipment == eq).order_by(History.id.desc()).limit(count)]
     except Equipment.DoesNotExist:
-        raise EquipmentDoesNotExists(f'Equipment with id {equipment_id} does not exists')
+        raise exceptions.EquipmentDoesNotExists(f'Equipment with id {equipment_id} does not exists')
 
 
 def get_equipment_history_by_date(equipemnt_id: int, start_day: int, start_month: int, start_year: int, end_day: int, end_month: int, end_year: int) -> list:
@@ -40,7 +40,7 @@ def get_equipment_history_by_date(equipemnt_id: int, start_day: int, start_month
         eq = Equipment.get(id=equipemnt_id)
         return [row.get_as_dict() for row in History.select().where((History.equipment == eq) & (date(day=start_day, month=start_month, year=start_year) <= History.date <= date(day=end_day, month=end_month, year=end_year)))]
     except Equipment.DoesNotExist:
-        raise EquipmentDoesNotExists(f'Equipment with id {equipemnt_id} does not exists')
+        raise exceptions.EquipmentDoesNotExists(f'Equipment with id {equipemnt_id} does not exists')
 
 
 def get_history_by_period(start_day: int, start_month: int, start_year: int, end_day: int, end_month: int, end_year: int) -> list:
