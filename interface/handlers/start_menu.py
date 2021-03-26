@@ -4,8 +4,9 @@ from aiogram.types import ContentType
 from interface.init_bot import dp, bot
 import interface.buttons as buttons
 from interface.handlers.user_verification import verification
+from interface import parse_data as parse
 
-from api import user
+from api import user, category, history
 
 
 @dp.message_handler(commands='start')
@@ -33,26 +34,36 @@ async def open_categories(call: types.CallbackQuery):
     """
     Show categories selection
     """
-    # Create list of categories
-    categories_buttons = [{'text':'\U0001F3A6 Камеры', 'callback':'cameras'},
-        {'text':'\U0001F52D Объективы', 'callback':'lenses'},
-        {'text': '\U0001F4A1 Свет', 'callback':'light'},
-        {'text': '\U0001F50A Звук', 'callback':'audio'},
-        {'text': '\U0001F3D7 Штативы', 'callback':'tripods'},
-        {'text': '\U0001F50B Акумы', 'callback':'battery'},
-        {'text': '\U0001F50C Питание', 'callback':'power'},
-        {'text': '\U0001F534 Для стримов', 'callback':'broadcast'},]
+    # Create list of categories from DB
+    categories = [cat['name'] for cat in category.get_all_categories()]
+    categories_buttons = [{'text': '\U0001F3A6 Камеры'},
+                        {'text': '\U0001F52D Объективы'}, 
+                        {'text': '\U0001F4A1 Свет'}, 
+                        {'text': '\U0001F50A Звук'}, 
+                        {'text': '\U0001F3D7 Штативы'}, 
+                        {'text': '\U0001F50B Акумы'}, 
+                        {'text': '\U0001F50C Питание'}, 
+                        {'text': '\U0001F534 Для стримов'}]
+    for index, cat in enumerate(categories):
+        categories_buttons[index]['callback'] = f"category {cat}"
 
-    await bot.send_message(chat_id=call.message.chat.id, text='Выберите категорию техники', reply_markup=types.InlineKeyboardMarkup().add(*buttons.create_inline_buttons(categories_buttons)))
+    await bot.send_message(chat_id=call.message.chat.id, text='Выберите категорию техники', reply_markup=buttons.create_inline_markup(categories_buttons))
 
 
-@dp.callback_query_handler(lambda call: call.data in ['cameras','light','audio','lenses','tripods','battery','power','broadcast',])
-async def get_category_list(call: types.CallbackQuery):
+@dp.callback_query_handler(lambda call: call.data.startswith('category'))
+async def get_category_equipment_list(call: types.CallbackQuery):
     """
     Get list of tech from specific category
     """
-   
-    await bot.send_message(chat_id=call.message.chat.id,text=call.data)
+    # Create list of categories from DB
+    categories = [cat['name'] for cat in category.get_all_categories()]
+    data = category.get_category_equipment(categories.index(call.data.split()[1]) + 1)
+
+    if data:
+        transformed_data = parse.parse_category_equipment_data(data)
+        bot_message = await bot.send_message(chat_id=call.message.chat.id, text=transformed_data, parse_mode=types.message.ParseMode.HTML)
+    else:
+        bot_message = await bot.send_message(chat_id=call.message.chat.id, text='В данной категории нет техники')
 
 
 @dp.callback_query_handler(lambda call: call.data == 'take equipment')
