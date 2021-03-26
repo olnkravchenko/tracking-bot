@@ -7,11 +7,6 @@ from interface.handlers.user_verification import verification
 
 from api import user
 
-# Create list of start menu buttons with main functionality
-start_menu_buttons = [{'text': '\U0001F4CB Категории', 'callback': 'categories'},
-        {'text': '\U0001F4F1 Взять технику', 'callback': 'take equipment'},
-        {'text': '\U0001F50D Мониторинг', 'callback': 'get history'},]
-
 
 @dp.message_handler(commands='start')
 async def start_menu(message: types.Message):
@@ -22,13 +17,14 @@ async def start_menu(message: types.Message):
     # Register user
     if not user.is_exists(message.chat.id):
         user.create_user(message.chat.id, message.chat.full_name, username)
-    # Verify user
+        for admin in user.get_admin_list():
+            await user_verification.verification(admin['id'], message.chat.id, f'{username}') # Verify user
     if user.is_verified(message.chat.id):
-        keyboard_interface = types.InlineKeyboardMarkup(row_width=1).add(*buttons.create_inline_buttons(start_menu_buttons))
+        keyboard_interface = types.InlineKeyboardMarkup(row_width=1).add(*buttons.create_start_menu_buttons(user.is_admin(message.chat.id)))
         await bot.send_message(chat_id=message.chat.id, text='Привет! Выбери действие ниже', reply_markup=keyboard_interface)
     else:
-        for admin in user.get_admin_list():
-            await verification(admin['id'], message.chat.id, f'{username}')
+        await bot.send_message(chat_id=message.chat.id, text='Извините, вы не верифицированы. В случае, если это ошибка, обратитесь к администраторам.')
+
 
 
 @dp.callback_query_handler(lambda call: call.data == 'categories')

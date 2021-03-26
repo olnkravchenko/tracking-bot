@@ -18,6 +18,5 @@ def get_category_equipment(id: int) -> list:
         raise CategoryDoesNotExists(f'Category with id {id} does not exists')
 
 
-
 def get_all_categories() -> list:
     return [cat.get_as_dict() for cat in Category.select()]

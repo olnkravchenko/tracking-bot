@@ -4,8 +4,8 @@ from interface.init_bot import dp, bot
 import interface.buttons as buttons
 from api import user
 
-async def verification(admin_id: int,  user_id: int, username: str):
-    keyboard_interface = types.InlineKeyboardMarkup().add(types.InlineKeyboardButton(text='\U00002705', callback_data=f'verification success {user_id}'), types.InlineKeyboardButton(text='\U0000274C', callback_data=f'verification failed {user_id}'))
+async def verification(admin_id: int, user_id: int, username: str):
+    keyboard_interface = buttons.create_inline_markup([{'text': '\U00002705', 'callback': f'verification success {user_id}'},{'text': '\U0000274C', 'callback': f'verification failed {user_id}'}])
 
     await bot.send_message(chat_id=admin_id, text=f"Подтвердите пользователя {f'@{username}' if username != 'None' else f'[{user_id}](tg://user?id={user_id})'}", reply_markup=keyboard_interface, parse_mode="Markdown")
 
