@@ -72,7 +72,7 @@ async def take_equipment(call: types.CallbackQuery):
     """
     Take equipment
     """
-
+    
 
 @dp.callback_query_handler(lambda call: call.data == 'get history')
 @buttons.delete_message
