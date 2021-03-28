@@ -3,7 +3,7 @@ from aiogram.types import ContentType
 
 from interface.init_bot import dp, bot
 import interface.buttons as buttons
-from interface.handlers.user_verification import verification
+from interface.handlers import equipment, monitoring, user_verification
 from interface import parse_data as parse
 
 from api import user, category, history
@@ -80,3 +80,13 @@ async def get_history(call: types.CallbackQuery):
     """
     Show history
     """
+    data = history.get_last_actions(count=20)
+    # TODO: add pages of history if amount of rows more than 20
+    history_buttons = [{'text': 'За период времени', 'callback': 'during_time'}]
+    if user.is_admin(call.message.chat.id):
+        history_buttons += [{'text': 'История пользователя', 'callback': 'user_history'}]
+    if data:
+        transformed_data = parse.parse_history_data(data)
+        await bot.send_message(chat_id=call.message.chat.id,text=transformed_data, reply_markup=buttons.create_inline_markup(history_buttons), parse_mode=types.message.ParseMode.HTML)
+    else:
+        await bot.send_message(chat_id=call.message.chat.id, text='История техники пуста', reply_markup=buttons.create_inline_markup(history_buttons))
