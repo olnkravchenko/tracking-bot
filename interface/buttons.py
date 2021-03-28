@@ -48,3 +48,32 @@ def delete_message(func):
         await func(*args)
 
     return wrapper
+
+
+def inline_buttons_creation(message: types.Message, page: list, keyboard_interface: types.InlineKeyboardMarkup, page_number: int = 0):
+    """
+    Create pages in InlineKeyboardButton(s)
+    :param message: edited message
+    :type message: types.Message
+    :param page: array of dictionaries with button's text and callback function
+    :type page: list
+    :param keyboard_interface: markup of buttons of the edited message
+    :type keyboard_interface: types.InlineKeyboardMarkup
+    :param page_number: equal to 0 if no arrows required, equal to 1 if it's the first page and 'next' arrow required, equal to 2 if it's the last page and 'previous' arrow required, greater than 1 if both arrows required
+    :type page_number: int
+    """
+    for button in page:
+        keyboard_interface.add(
+            types.InlineKeyboardButton(text=button['text'], callback_data=button['callback']))
+
+    # create arrow buttons
+    if page_number == 0: # first page
+        keyboard_interface.add(types.InlineKeyboardButton(text='\U000025B6', callback_data='next_page'))
+    elif page_number == 2: # last page
+        keyboard_interface.add(types.InlineKeyboardButton(
+            text='\U000025C0', callback_data='previous_page'))
+    else:
+        keyboard_interface.row(types.InlineKeyboardButton(
+            text='\U000025C0', callback_data='previous_page'),
+            types.InlineKeyboardButton(
+            text='\U000025B6', callback_data='next_page'))
