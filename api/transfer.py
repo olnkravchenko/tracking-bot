@@ -43,3 +43,10 @@ def verify_transfer(id: int) -> bool:
     eq.save()
     t.delete_instance()
     return True
+
+
+def delete_transfer(id: int):
+    try:
+        Transfer.delete().where(Transfer.id == id).execute()
+    except Transfer.DoesNotExist:
+        raise TransferDoesNotExists(f'Transfer with id {id} does not exists')
