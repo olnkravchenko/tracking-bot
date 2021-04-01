@@ -39,10 +39,10 @@ def delete_message(func):
     Delete message that triggered the callback
     """
     async def wrapper(*args):
-        if type(args[0]) == types.CallbackQuery:
+        if isinstance(args[0], types.CallbackQuery):
             call = args[0]
             await bot.delete_message(call.message.chat.id, call.message.message_id)
-        elif type(args[0]) == types.Message:
+        elif isinstance(args[0], types.Message):
             message = args[0]
             await bot.delete_message(message.chat.id, message.message_id)
         await func(*args)

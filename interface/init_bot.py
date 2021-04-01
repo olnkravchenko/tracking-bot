@@ -4,10 +4,10 @@ import logging
 
 from config import TOKEN
 
-# Configure logging
+# configure logging
 logging.basicConfig(level=logging.INFO)
 
-# Initialize bot and dispatcher
+# initialize bot and dispatcher
 bot = Bot(token=TOKEN)
 memory_storage = MemoryStorage()
 dp = Dispatcher(bot, storage=memory_storage)

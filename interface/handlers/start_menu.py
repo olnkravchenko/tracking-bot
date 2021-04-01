@@ -15,17 +15,16 @@ async def start_menu(message: types.Message):
     Open start menu
     """
     username = message.chat.username or 'None'
-    # Register user
+    # add user to the db
     if not user.is_exists(message.chat.id):
         user.create_user(message.chat.id, message.chat.full_name, username)
         for admin in user.get_admin_list():
-            await user_verification.verification(admin['id'], message.chat.id, f'{username}') # Verify user
+            await user_verification.verification(admin['id'], message.chat.id, f'{username}') # verify user
     if user.is_verified(message.chat.id):
         keyboard_interface = types.InlineKeyboardMarkup(row_width=1).add(*buttons.create_start_menu_buttons(user.is_admin(message.chat.id)))
-        await bot.send_message(chat_id=message.chat.id, text='Привет! Выбери действие ниже', reply_markup=keyboard_interface)
+        await bot.send_message(chat_id=message.chat.id, text='Привет! Выберите действие ниже', reply_markup=keyboard_interface)
     else:
-        await bot.send_message(chat_id=message.chat.id, text='Извините, вы не верифицированы. В случае, если это ошибка, обратитесь к администраторам.')
-
+        await bot.send_message(chat_id=message.chat.id, text='Извините, вы не верифицированы. В случае, если это ошибка, обратитесь к администраторам')
 
 
 @dp.callback_query_handler(lambda call: call.data == 'categories')
@@ -55,7 +54,7 @@ async def get_category_equipment_list(call: types.CallbackQuery):
     """
     Get list of tech from specific category
     """
-    # Create list of categories from DB
+    # create list of categories from DB
     categories = [cat['name'] for cat in category.get_all_categories()]
     data = category.get_category_equipment(categories.index(call.data.split()[1]) + 1)
 

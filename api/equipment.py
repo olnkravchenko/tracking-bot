@@ -23,9 +23,9 @@ def add_equipment(
             control=control,
         )
     except User.DoesNotExist:
-        raise UserDoesNotExists(f'User with id {owner} does not exists')
+        raise UserDoesNotExist(f'User with id {owner} does not exist')
     except Category.DoesNotExist:
-        raise CategoryDoesNotExists(f'Category with id {category_id} does not exists')
+        raise CategoryDoesNotExist(f'Category with id {category_id} does not exist')
     filename = f"{eq.id}_qr.png"
     new_qr_code(
         data_=f"{eq.id} {control}", ver=qr_code_version, size=qr_code_version, filename=filename
@@ -37,20 +37,20 @@ def get_equipment(id: int) -> dict:
     try:
         return Equipment.get(id=id).get_as_dict()
     except Equipment.DoesNotExist:
-        raise EquipmentDoesNotExists(f'Equipment with id {id} does not exists')
+        raise EquipmentDoesNotExist(f'Equipment with id {id} does not exist')
 
 def get_holder(id: int) -> dict:
     try:
         return Equipment.get(id=id).holder.get_as_dict()
     except Equipment.DoesNotExist:
-        raise EquipmentDoesNotExists(f'Equipment with id {id} does not exists')
+        raise EquipmentDoesNotExist(f'Equipment with id {id} does not exist')
 
 
 def get_owner(id: int) -> dict:
     try:
         return Equipment.get(id=id).owner.get_as_dict()
     except Equipment.DoesNotExist:
-        raise EquipmentDoesNotExists(f'Equipment with id {id} does not exists.')
+        raise EquipmentDoesNotExist(f'Equipment with id {id} does not exist')
 
 
 def delete_equipment(id: int) -> bool:
@@ -62,7 +62,7 @@ def change_equipment_description(id: int, new_description: str) -> bool:
     try:
         eq = Equipment.get(id=id)
     except Equipment.DoesNotExist:
-        raise EquipmentDoesNotExists(f'Equipment with id {id} does not exists')
+        raise EquipmentDoesNotExist(f'Equipment with id {id} does not exist')
     eq.description = new_description
     eq.save()
     return True
@@ -72,7 +72,7 @@ def change_equipment_category(id: int, new_category: int) -> bool:
     try:
         eq = Equipment.get(id=id)
     except Equipment.DoesNotExist:
-        raise EquipmentDoesNotExists(f'Equipment with id {id} does not exists')
+        raise EquipmentDoesNotExist(f'Equipment with id {id} does not exist')
     eq.category = Category.get(id=new_category)
     eq.save()
     return True
@@ -82,4 +82,4 @@ def validate_control_sum(id: int, sum: str) -> bool:
     try:
         return sum == Equipment.get(id=id).control
     except Equipment.DoesNotExist:
-        raise EquipmentDoesNotExists(f'Equipment with id {id} does not exists')
+        raise EquipmentDoesNotExist(f'Equipment with id {id} does not exist')
