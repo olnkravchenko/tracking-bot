@@ -25,6 +25,7 @@ def create_start_menu_buttons(is_admin: bool):
     start_menu_buttons = [{'text': '\U0001F4CB Категории', 'callback': 'categories'},
             {'text': '\U0001F4F1 Взять технику', 'callback': 'take_equipment'},
             {'text': '\U0001F50D Мониторинг', 'callback': 'get_history'},
+            {'text':'\U0001F9D0	Отсканировать QR код','callback':'scan_qr_code'}]
     if is_admin:
         start_menu_buttons.append({'text': '\U0001F9D1 Админская панель', 'callback': 'admin_panel'})
     

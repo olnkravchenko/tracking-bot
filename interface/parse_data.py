@@ -25,6 +25,17 @@ def parse_history_data(source: list) -> str:
     return '\n'.join(transformed_data)
 
 
+def parse_equipment_history_data(source: list) -> str:
+    """
+    Parse data from history table from DB in format
+    \nn.date and time
+        \nsource
+        \ndestination
+    """
+    transformed_data = [f"<b>{i+1}. {isoformat_to_informal(value['date'])}</b>\nВзято у @{value['source']['username']}\nПередано @{value['destination']['username']}" for i, value in enumerate(source)]
+    return '\n'.join(transformed_data)
+
+
 def parse_qr_code_data(source: str) -> str:
     """
     Parse data from QR code in format

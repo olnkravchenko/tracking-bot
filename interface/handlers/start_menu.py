@@ -3,17 +3,19 @@ from aiogram.types import ContentType
 
 from interface.init_bot import dp, bot
 import interface.buttons as buttons
-from interface.handlers import equipment, monitoring, user_verification
+from interface.handlers import equipment, monitoring, user_verification, admin_panel
 from interface import parse_data as parse
 
 from api import user, category, history
 
-
+@dp.callback_query_handler(lambda call: call.data == 'start_menu')
 @dp.message_handler(commands='start')
-async def start_menu(message: types.Message):
+@buttons.delete_message
+async def start_menu(call):
     """
     Open start menu
     """
+    message = call.message if isinstance(call, types.CallbackQuery) else call
     username = message.chat.username or 'None'
     # add user to the db
     if not user.is_exists(message.chat.id):
@@ -67,3 +69,17 @@ async def get_history(call: types.CallbackQuery):
         await bot.send_message(chat_id=call.message.chat.id,text=transformed_data, reply_markup=buttons.create_inline_markup(history_buttons), parse_mode=types.message.ParseMode.HTML)
     else:
         await bot.send_message(chat_id=call.message.chat.id, text='История пуста', reply_markup=buttons.create_inline_markup(history_buttons, row_width=2))
+
+
+@dp.callback_query_handler(lambda call: call.data == 'admin_panel')
+@buttons.delete_message
+async def admin_panel(call: types.CallbackQuery):
+    """
+    Admin panel
+    """# TODO: write handlers
+    admin_markup = buttons.create_inline_markup(
+        [{'text':'Добавить технику','callback':'add_eq'},
+        {'text':'Удалить технику','callback':'delete_eq'},
+        {'text':'Удалить пользователя','callback':'delete_user'}, {'text':'Вернуться назад', 'callback':'start_menu'}], row_width=2)
+
+    await bot.send_message(chat_id=call.message.chat.id, text='Привет! Выберите действие ниже', reply_markup=admin_markup)
