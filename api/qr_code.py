@@ -1,5 +1,7 @@
 import qrcode
 import cv2 as cv
+from io import BytesIO
+from os import remove
 
 
 class QRCodeDoesNotExist(Exception):
@@ -25,6 +27,17 @@ def new_qr_code(data_, filename, ver=1, err_cor=qrcode.constants.ERROR_CORRECT_H
     img = qr.make_image(fill_color=fg_color, back_color=bg_color).convert(space)
     img.save(filename)
     return filename
+
+
+def save_photo(file: BytesIO, filename: str):
+    with open(f'./images/{filename}.jpg', 'wb') as out:
+        out.write(file.getbuffer())
+
+
+get_file_path = lambda filename: f'./images/{filename}.jpg'
+
+
+delete_file = lambda filename: remove(filename)
 
 
 if __name__ == '__main__':
