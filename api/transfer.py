@@ -49,18 +49,18 @@ def delete_transfer(id: int):
     try:
         Transfer.delete().where(Transfer.id == id).execute()
     except Transfer.DoesNotExist:
-        raise TransferDoesNotExist(f'Transfer with id {id} does not exists')
+        raise TransferDoesNotExist(f'Transfer with id {id} does not exist')
 
 
 def get_transfer_by_equipment_id(id: int) -> dict:
     try:
         eq = Equipment.get(id=id)
     except Equipment.DoesNotExist:
-        raise EquipmentDoesNotExists(f'Equipment with id {id} does not exists')
+        raise EquipmentDoesNotExist(f'Equipment with id {id} does not exist')
     try:
         transfer = Transfer.get(equipment=eq)
     except Transfer.DoesNotExist:
-        raise TransferDoesNotExists(f'Transfer with equipment with id {id} does not exists')
+        raise TransferDoesNotExist(f'Transfer with equipment with id {id} does not exist')
     try:
         transfer = Transfer.get(equipment=eq)
     except Transfer.DoesNotExist:
