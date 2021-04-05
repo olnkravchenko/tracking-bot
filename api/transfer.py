@@ -49,7 +49,7 @@ def delete_transfer(id: int):
     try:
         Transfer.delete().where(Transfer.id == id).execute()
     except Transfer.DoesNotExist:
-        raise TransferDoesNotExists(f'Transfer with id {id} does not exists')
+        raise TransferDoesNotExist(f'Transfer with id {id} does not exists')
 
 
 def get_transfer_by_equipment_id(id: int) -> dict:
