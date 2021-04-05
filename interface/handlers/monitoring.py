@@ -7,6 +7,7 @@ from interface.init_bot import dp, bot
 from api import user, history
 import interface.buttons as buttons
 from interface import parse_data as parse
+from interface.handlers.equipment import read_qr_code
 
 
 class Get_User_History(StatesGroup):
@@ -78,3 +79,34 @@ async def get_period_history_step_2(message: types.Message):
         await bot.send_message(chat_id=message.chat.id, text=f"История с {data[0]} по {data[1]}:\n{transformed_result}", parse_mode=types.message.ParseMode.HTML)
     else:
         await bot.send_message(chat_id=message.chat.id, text=f'История с {data[0]} по {data[1]} пуста.')
+
+
+class Get_Equipment_History(StatesGroup):
+    """
+    Use states as events for getting history of specific equipment
+    """
+    scan_qr_code = State()
+
+
+@dp.callback_query_handler(lambda call: call.data == 'eq_history')
+@buttons.delete_message
+async def equipment_history_step_1(call: types.CallbackQuery):
+    """
+    Start getting history of equipment
+    """
+    await bot.send_message(chat_id=call.message.chat.id, text='Отправьте фото с QR кодом техники. На одном фото должен быть <b>только один QR код</b>', parse_mode=types.message.ParseMode.HTML)
+    await Get_Equipment_History.scan_qr_code.set()
+
+
+@dp.message_handler(state=Get_Equipment_History.scan_qr_code, content_types=types.ContentTypes.PHOTO)
+async def equipment_history_step_2(message: types.Message, state:FSMContext):
+    """
+    Scan QR code
+    """
+    # read data from QR code
+    data = await read_qr_code(message)
+    # find equipment history and parse data
+    eq_history_data = history.get_equipment_history(int(data.split()[0]))
+    transformed_result = parse.parse_equipment_history_data(eq_history_data)
+    await bot.send_message(chat_id=message.chat.id, text=transformed_result+'\nЧтобы вернуться в главное меню напишите /start', parse_mode=types.message.ParseMode.HTML)
+    await state.finish()

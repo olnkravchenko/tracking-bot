@@ -4,6 +4,7 @@ from interface.init_bot import dp, bot
 import interface.buttons as buttons
 from api import user
 
+# TODO: delete other messages for other admins
 async def verification(admin_id: int, user_id: int, username: str):
     keyboard_interface = buttons.create_inline_markup([{'text': '\U00002705', 'callback': f'verification success {user_id}'},{'text': '\U0000274C', 'callback': f'verification failed {user_id}'}])
 

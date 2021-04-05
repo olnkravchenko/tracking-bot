@@ -15,7 +15,7 @@ def get_category_equipment(id: int) -> list:
     try:
         return [eq.get_as_dict() for eq in Category.get(id=id).equipment]
     except Category.DoesNotExist:
-        raise CategoryDoesNotExists(f'Category with id {id} does not exists')
+        raise CategoryDoesNotExist(f'Category with id {id} does not exist')
 
 
 def get_all_categories() -> list:
