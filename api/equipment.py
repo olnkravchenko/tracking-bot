@@ -39,6 +39,7 @@ def get_equipment(id: int) -> dict:
     except Equipment.DoesNotExist:
         raise EquipmentDoesNotExist(f'Equipment with id {id} does not exist')
 
+
 def get_holder(id: int) -> dict:
     try:
         return Equipment.get(id=id).holder.get_as_dict()
@@ -83,3 +84,11 @@ def validate_control_sum(id: int, sum: str) -> bool:
         return sum == Equipment.get(id=id).control
     except Equipment.DoesNotExist:
         raise EquipmentDoesNotExist(f'Equipment with id {id} does not exist')
+
+
+def get_equipment_by_holder(id: int) -> list:
+    try:
+        holder = User.get(id=id)
+    except User.DoesNotExist:
+        raise UserDoesNotExist(f'User with id {id} does not exist')
+    return [eq.get_as_dict() for eq in holder.equipment]

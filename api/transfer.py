@@ -61,4 +61,8 @@ def get_transfer_by_equipment_id(id: int) -> dict:
         transfer = Transfer.get(equipment=eq)
     except Transfer.DoesNotExist:
         raise TransferDoesNotExist(f'Transfer with equipment with id {id} does not exist')
+    try:
+        transfer = Transfer.get(equipment=eq)
+    except Transfer.DoesNotExist:
+        raise TransferDoesNotExist(f'Transfer with equipment with id {id} does not exist')
     return transfer.get_as_dict()
