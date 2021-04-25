@@ -14,7 +14,7 @@ class BaseModel(Model):
 
 class User(BaseModel):
     name = TextField()
-    username = TextField()
+    username = TextField(null=True)
     role = TextField()
 
 

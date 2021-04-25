@@ -1,5 +1,7 @@
 import qrcode
 import cv2 as cv
+from io import BytesIO
+from os import remove
 
 
 class QRCodeDoesNotExist(Exception):
@@ -23,15 +25,25 @@ def new_qr_code(data_, filename, ver=1, err_cor=qrcode.constants.ERROR_CORRECT_H
     qr.add_data(data_)
     qr.make(fit=True)
     img = qr.make_image(fill_color=fg_color, back_color=bg_color).convert(space)
-    img.save(filename)
+    img.save(f'./images/qr_codes/{filename}')
     return filename
 
 
+def save_photo(file: BytesIO, filename: str):
+    with open(f'./images/{filename}.jpg', 'wb') as out:
+        out.write(file.getbuffer())
+
+
+get_file_path = lambda filename: f'./images/{filename}.jpg'
+
+
+delete_file = lambda filename: remove(filename)
+
+
 if __name__ == '__main__':
-    data1 = 'test1'
-    data2 = 'test2'
-    new_qr_code(data1, 'data1.png', ver=4, size=4)
-    new_qr_code(data2, 'data2.png', ver=4, size=4)
+    control = ['asdasAD123134FGSD','asdas4FGSD', '52352SD', '52352342342SD', '524562111SD', '52352678678SD', '367721Fasdf']
+    for index, element in enumerate(control):
+        new_qr_code(f'{index+1} {element}', f'data{index}.png', ver=4, size=4)
     # get_qr_code_data('1.jpg')
     # get_qr_code_data('2.jpg')
-    print(get_qr_code_data('3.jpg'))
+    #print(get_qr_code_data('data0.png'))
