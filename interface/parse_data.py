@@ -41,7 +41,13 @@ def parse_qr_code_data(source: str) -> str:
     Parse data from QR code in format
     \n equipment name
     """
-    return f"{get_equipment(int(source.split()[0]))['name']}"
+def parse_my_equipment_data(source: list) -> str:
+    """
+    Parse data from list of user's equipment
+    \n equipment name
+    """
+    return '\n'.join([f"{i+1}. {value['name']}"
+                     for i, value in enumerate(source)])
 
 
 isoformat_to_informal = lambda datetime: f'{datetime.day}.{datetime.month}.{datetime.year}, {datetime.hour}:{datetime.minute}'

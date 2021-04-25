@@ -4,7 +4,7 @@ from aiogram.dispatcher.filters.state import State, StatesGroup
 from datetime import date, timedelta
 
 from interface.init_bot import dp, bot
-from api import user, history
+from api import user, history, equipment
 import interface.buttons as buttons
 from interface import parse_data as parse
 from interface.handlers.equipment import read_qr_code
@@ -79,6 +79,17 @@ async def get_period_history_step_2(message: types.Message):
         await bot.send_message(chat_id=message.chat.id, text=f"История с {data[0]} по {data[1]}:\n{transformed_result}", parse_mode=types.message.ParseMode.HTML)
     else:
         await bot.send_message(chat_id=message.chat.id, text=f'История с {data[0]} по {data[1]} пуста.')
+
+
+@dp.callback_query_handler(lambda call: call.data == 'my_eq')
+@buttons.delete_message
+async def my_equipment(call: types.CallbackQuery):
+    """
+    Get list of user's equipment
+    """
+    my_eq_data = equipment.get_equipment_by_holder(call.message.chat.id)
+    transformed_result = parse.parse_my_equipment_data(my_eq_data)
+    await bot.send_message(chat_id=call.message.chat.id, text=transformed_result)
 
 
 class Get_Equipment_History(StatesGroup):
