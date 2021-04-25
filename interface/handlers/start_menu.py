@@ -1,12 +1,12 @@
 from aiogram import types
-from aiogram.types import ContentType
 
 from interface.init_bot import dp, bot
 import interface.buttons as buttons
-from interface.handlers import equipment, monitoring, user_verification, admin_panel
+from interface.handlers import user_verification, equipment, monitoring, admin_panel
 from interface import parse_data as parse
 
 from api import user, category, history
+
 
 @dp.callback_query_handler(lambda call: call.data == 'start_menu')
 @dp.message_handler(commands='start')
@@ -16,17 +16,30 @@ async def start_menu(call):
     Open start menu
     """
     message = call.message if isinstance(call, types.CallbackQuery) else call
-    username = message.chat.username or 'None'
+    username = message.chat.username or None
     # add user to the db
+    registration_flag = False
     if not user.is_exists(message.chat.id):
+        registration_flag = True
         user.create_user(message.chat.id, message.chat.full_name, username)
+        await bot.send_message(
+            chat_id=message.chat.id,
+            text='Ожидайте подтверждения от администраторов')
         for admin in user.get_admin_list():
-            await user_verification.verification(admin['id'], message.chat.id, f'{username}') # verify user
+            await user_verification.verification(
+                admin_id=admin['id'], user_id=message.chat.id,
+                username=username)  # verify user
     if user.is_verified(message.chat.id):
-        keyboard_interface = types.InlineKeyboardMarkup(row_width=1).add(*buttons.create_start_menu_buttons(user.is_admin(message.chat.id)))
-        await bot.send_message(chat_id=message.chat.id, text='Привет! Выберите действие ниже', reply_markup=keyboard_interface)
-    else:
-        await bot.send_message(chat_id=message.chat.id, text='Извините, вы не верифицированы. В случае, если это ошибка, обратитесь к администраторам')
+        # check if username in the DB is up to date
+        check_username(message)
+        keyboard_interface = types.InlineKeyboardMarkup(row_width=1).add(
+            *buttons.create_start_menu_buttons(message.chat.id))
+        await bot.send_message(chat_id=message.chat.id,
+                               text='Привет! Выберите действие ниже',
+                               reply_markup=keyboard_interface)
+    elif not registration_flag:
+        await bot.send_message(chat_id=message.chat.id, text='Извините, вы не\
+ верифицированы. В случае, если это ошибка, обратитесь к администраторам')
 
 
 @dp.callback_query_handler(lambda call: call.data == 'categories')
@@ -82,4 +95,11 @@ async def admin_panel(call: types.CallbackQuery):
         {'text':'Удалить технику','callback':'delete_eq'},
         {'text':'Удалить пользователя','callback':'delete_user'}, {'text':'Вернуться назад', 'callback':'start_menu'}], row_width=2)
 
-    await bot.send_message(chat_id=call.message.chat.id, text='Привет! Выберите действие ниже', reply_markup=admin_markup)
+def check_username(message: types.Message):
+    """
+    Check if username in the DB is up to date and change it if it is not
+    """
+    try:
+        user.get_user_by_username(message.chat.username)
+    except Exception:
+        user.change_username(message.chat.id, message.chat.username)

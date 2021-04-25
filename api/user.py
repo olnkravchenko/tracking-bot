@@ -66,3 +66,12 @@ def get_user_equipment(id: int) -> list:
 
 def get_admin_list() -> list:
     return [admin.get_as_dict() for admin in User.select().where(User.role == 'admin')]
+
+
+def change_username(user_id: int, new_username: str):
+    try:
+        user = User.get(id=user_id)
+    except User.DoesNotExist:
+        raise UserDoesNotExist(f'User with id {id} does not exist')
+    user.username = new_username
+    user.save()
