@@ -48,7 +48,9 @@ async def open_categories(call: types.CallbackQuery):
     """
     Show categories selection
     """
-    await bot.send_message(chat_id=call.message.chat.id, text='Выберите категорию техники', reply_markup=buttons.create_categories_buttons())
+    await bot.send_message(chat_id=call.message.chat.id,
+                           text='Выберите категорию техники',
+                           reply_markup=buttons.create_categories_buttons())
 
 
 @dp.callback_query_handler(lambda call: call.data.startswith('category'))
@@ -58,13 +60,22 @@ async def get_category_equipment_list(call: types.CallbackQuery):
     """
     # create list of categories from DB
     categories = [cat['name'] for cat in category.get_all_categories()]
-    data = category.get_category_equipment(categories.index(call.data.split()[1]) + 1)
-
+    try:
+        data = category.get_category_equipment(categories.index(
+            call.data.split()[1]) + 1)
+    except Exception:
+        data = []
+        await bot.send_message(chat_id=call.message.chat_id,
+                               text='Данной категории не существует')
+    # TODO: write pages for equipment list of the category
     if data:
         transformed_data = parse.parse_category_equipment_data(data)[0]
-        bot_message = await bot.send_message(chat_id=call.message.chat.id, text=transformed_data, parse_mode=types.message.ParseMode.HTML)
+        await bot.send_message(
+            chat_id=call.message.chat.id,
+            text=transformed_data, parse_mode=types.message.ParseMode.HTML)
     else:
-        bot_message = await bot.send_message(chat_id=call.message.chat.id, text='В данной категории нет техники')
+        await bot.send_message(chat_id=call.message.chat.id,
+                               text='В данной категории нет техники')
 
 
 @dp.callback_query_handler(lambda call: call.data == 'get_history')
@@ -74,22 +85,33 @@ async def get_history(call: types.CallbackQuery):
     Show history
     """
     data = history.get_last_actions(count=20)
-    history_buttons = [{'text': 'За период времени', 'callback': 'during_time'},{'text': 'Моя техника', 'callback': 'my_eq'}, {'text': 'История техники', 'callback': 'eq_history'}]
+    history_buttons = [
+        {'text': 'За период времени', 'callback': 'during_time'},
+        {'text': 'Моя техника', 'callback': 'my_eq'},
+        {'text': 'История техники', 'callback': 'eq_history'}]
     if user.is_admin(call.message.chat.id):
-        history_buttons += [{'text': 'История пользователя', 'callback': 'user_history'}]
+        history_buttons += [
+            {'text': 'История пользователя', 'callback': 'user_history'}]
     if data:
         transformed_data = parse.parse_history_data(data)
-        await bot.send_message(chat_id=call.message.chat.id,text=transformed_data, reply_markup=buttons.create_inline_markup(history_buttons), parse_mode=types.message.ParseMode.HTML)
+        await bot.send_message(
+            chat_id=call.message.chat.id,
+            text=transformed_data,
+            reply_markup=buttons.create_inline_markup(history_buttons),
+            parse_mode=types.message.ParseMode.HTML)
     else:
-        await bot.send_message(chat_id=call.message.chat.id, text='История пуста', reply_markup=buttons.create_inline_markup(history_buttons, row_width=2))
+        await bot.send_message(chat_id=call.message.chat.id,
+                               text='История пуста',
+                               reply_markup=buttons.create_inline_markup(
+                                    history_buttons, row_width=2))
 
 
 @dp.callback_query_handler(lambda call: call.data == 'admin_panel')
 @buttons.delete_message
-async def admin_panel(call: types.CallbackQuery):
+async def admin_menu(call: types.CallbackQuery):
     """
     Admin panel
-    """# TODO: write handlers
+    """
     admin_markup = buttons.create_inline_markup(
         [{'text':'Добавить технику','callback':'add_eq'},
         {'text':'Удалить технику','callback':'delete_eq'},

@@ -82,8 +82,8 @@ class Take_Equipment(StatesGroup):
     """
     Use states as events for taking equipment
     """
-    scan_qr_code = State()
-    waiting_for_confirmation = State()
+    scan_qr_code = State()  # step 1
+    waiting_for_confirmation = State()  # step 3
 
 
 @dp.callback_query_handler(lambda call: call.data == 'take_equipment')
@@ -92,27 +92,43 @@ async def take_equipment_step_1(call: types.CallbackQuery):
     """
     Request a photo with QR code
     """
-    await bot.send_message(chat_id=call.message.chat.id, text='Отправьте фото с QR кодом техники. На одном фото должен быть <b>только один QR код</b>.\nПосле отправки всех QR кодов напишите /ok', parse_mode=types.message.ParseMode.HTML)
+    await bot.send_message(chat_id=call.message.chat.id, text='Отправьте фото с\
+QR кодом техники. На одном фото должен быть <b>только один QR код</b>.\nПосле\
+отправки всех QR кодов напишите /ok', parse_mode=types.message.ParseMode.HTML)
     await Take_Equipment.scan_qr_code.set()
     state = dp.current_state()
     await state.update_data(user_items=[], equipment_names=[])
 
 
-@dp.message_handler(state=Take_Equipment.scan_qr_code, content_types=types.ContentTypes.PHOTO)
+@dp.message_handler(state=Take_Equipment.scan_qr_code,
+                    content_types=types.ContentTypes.PHOTO)
 async def take_equipment_step_2(message: types.Message, state: FSMContext):
     """
     Get QR code, read data from it and create transfer
     """
     # read data from user's photo with QR code
+    # TODO: validation control sum
     eq = await read_qr_code(message)
     eq_buffer = await state.get_data()
-    transformed_result = parse_qr_code_data(eq) # get equipment name
-    # write data to storage
-    await state.update_data(user_items=eq_buffer['user_items']+[eq], equipment_names=eq_buffer['equipment_names']+[transformed_result], user_id=message.chat.id)
-    # create transfer
-    eq_data = equipment.get_equipment(int(eq.split()[0]))
-    transfer.create_transfer(eq_data['id'], eq_data['holder']['id'], message.chat.id)
-    await bot.send_message(chat_id=message.chat.id, text=transformed_result)
+    if eq:
+        transformed_result = parse_qr_code_data(eq)  # get equipment name
+        if transformed_result not in eq_buffer['equipment_names']:
+            await bot.send_message(chat_id=message.chat.id,
+                                   text=transformed_result)
+            if transformed_result != 'Данной техники нет в базе данных':
+                # write data to storage
+                await state.update_data(
+                    user_items=eq_buffer['user_items']+[eq],
+                    equipment_names=eq_buffer['equipment_names']
+                    + [transformed_result],
+                    user_id=message.chat.id)
+                # create transfer
+                eq_data = equipment.get_equipment(int(eq.split()[0]))
+                transfer.create_transfer(eq_data['id'], eq_data['holder']['id'],
+                                         message.chat.id)
+        else:
+            await bot.send_message(chat_id=message.chat.id,
+                                   text='Вы уже взяли данную технику')
 
 
 @dp.message_handler(state=Take_Equipment.scan_qr_code, commands='ok')
@@ -120,41 +136,49 @@ async def take_equipment_step_3(message: types.Message, state: FSMContext):
     """
     Ask admins for permission
     """
-    eq_buffer = await state.get_data() # list with equipment ids and names
-    eq_data = [equipment.get_equipment(int(eq.split()[0])) for eq in eq_buffer['user_items']]
-    await bot.send_message(chat_id=message.chat.id, text='Ожидайте подтверждения от администраторов')
+    eq_buffer = await state.get_data()  # list with equipment ids and names
+    await bot.send_message(chat_id=message.chat.id,
+                           text='Ожидайте подтверждения от администраторов')
     for admin in user.get_admin_list():
-         await equipment_confirmation(admin['id'], message.chat.id, eq_buffer)
+        await equipment_confirmation(admin['id'], message.chat.id, eq_buffer)
     await Take_Equipment.next()
 
 
-@dp.callback_query_handler(lambda call: call.data == 'conf_success', state=Take_Equipment.waiting_for_confirmation)
-async def take_equipment_step_4_ok(call: types.CallbackQuery):
+@dp.callback_query_handler(lambda call: call.data == 'conf_success',
+                           state=Take_Equipment.waiting_for_confirmation)
+async def take_equipment_step_4_ok(call: types.CallbackQuery,
+                                   state: FSMContext):
     """
     Close transfer and add it to the history
     """
+    # TODO: rewrite state with func argument
     # get current state
-    state = dp.current_state()
     user_id = await state.get_data()
     await state.finish()
-    user_id = user_id['user_id'] # get user id
-    await bot.send_message(chat_id=user_id, text='Ваша заявка на взятие техники была подтверждена')
-    user_transfers = [trans['id'] for trans in transfer.get_active_transfers(user_id)]
+    user_id = user_id['user_id']  # get user id
+    await bot.send_message(chat_id=user_id, text='Ваша заявка на взятие техники\
+ была подтверждена')
+    user_transfers = [trans['id']
+                      for trans in transfer.get_active_transfers(user_id)]
     list(map(transfer.verify_transfer, user_transfers))
 
 
-@dp.callback_query_handler(lambda call: call.data == 'conf_failed', state=Take_Equipment.waiting_for_confirmation)
-async def take_equipment_step_4_fail(call: types.CallbackQuery):
+@dp.callback_query_handler(lambda call: call.data == 'conf_failed',
+                           state=Take_Equipment.waiting_for_confirmation)
+async def take_equipment_step_4_fail(call: types.CallbackQuery,
+                                     state: FSMContext):
     """
     Close transfer and delete it
     """
+    # TODO: rewrite state with func argument
     # get current state
-    state = dp.current_state()
     user_id = await state.get_data()
     await state.finish()
-    user_id = user_id['user_id'] # get user id
-    await bot.send_message(chat_id=user_id, text='Ваша заявка на взятие техники была отклонена')
-    user_transfers = [trans['id'] for trans in transfer.get_active_transfers(user_id)]
+    user_id = user_id['user_id']  # get user id
+    await bot.send_message(chat_id=user_id,
+                           text='Ваша заявка на взятие техники была отклонена')
+    user_transfers = [trans['id']
+                      for trans in transfer.get_active_transfers(user_id)]
     list(map(transfer.delete_transfer, user_transfers))
 
 
@@ -166,10 +190,16 @@ async def read_qr_code(message: types.Message) -> str:
     photo = await bot.download_file_by_id(message.photo[0].file_id)
     photo_id = str(message.photo[0].file_id)
     qr_code.save_photo(photo, photo_id)
-    # read file
-    result = qr_code.get_qr_code_data(qr_code.get_file_path(photo_id))
-    # delete file
-    qr_code.delete_file(qr_code.get_file_path(photo_id))
+    try:
+        # read file
+        result = qr_code.get_qr_code_data(qr_code.get_file_path(photo_id))
+        # delete file
+        qr_code.delete_file(qr_code.get_file_path(photo_id))
+    except Exception:
+        result = ''
+        await bot.send_message(
+            chat_id=message.chat.id,
+            text='Произошла ошибка в распознавании фото. Попробуйте ещё раз')
     return result
 
 
@@ -178,7 +208,9 @@ async def equipment_confirmation(admin_id: int, user_id: int, eq_names: list):
     """
     Confirm taking the equipment
     """
-    keyboard_interface = buttons.create_inline_markup([{'text': '\U00002705', 'callback': f"conf_success"},{'text': '\U0000274C', 'callback': f"conf_failed"}])
+    keyboard_interface = buttons.create_inline_markup(
+        [{'text': '\U00002705', 'callback': "conf_success"},
+         {'text': '\U0000274C', 'callback': "conf_failed"}])
 
     transformed_eq_names = '\n'.join(eq_names['equipment_names'])
     try:
