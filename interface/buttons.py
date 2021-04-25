@@ -34,10 +34,10 @@ def create_start_menu_buttons(user_id: int):
         {'text': '\U0001F50D Мониторинг', 'callback': 'get_history'},
         {'text': '\U0001F9D0 Отсканировать QR код', 'callback': 'scan_qr_code'}
         ]
-            {'text':'\U0001F9D0	Отсканировать QR код','callback':'scan_qr_code'}]
-    if is_admin:
-        start_menu_buttons.append({'text': '\U0001F9D1 Админская панель', 'callback': 'admin_panel'})
-    
+    if get_equipment_by_holder(user_id):
+        start_menu_buttons.append(
+            {'text': '\U0001F4E5 Вернуть технику', 'callback': 'return_eq'}
+        )
     if is_admin(user_id):
         start_menu_buttons.append(
             {'text': '\U0001F9D1 Админская панель', 'callback': 'admin_panel'})

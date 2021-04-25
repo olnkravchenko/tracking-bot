@@ -213,9 +213,43 @@ async def equipment_confirmation(admin_id: int, user_id: int, eq_names: list):
          {'text': '\U0000274C', 'callback': "conf_failed"}])
 
     transformed_eq_names = '\n'.join(eq_names['equipment_names'])
-    try:
-        username = user.get_user(user_id)['username']
-    except:
-        username = 'None'
-    await bot.send_message(chat_id=admin_id, text=f"Подтвердите передачу техники к {f'@{username}' if username != 'None' else f'[{user_id}](tg://user?id={user_id})'}. Список техники:\n{transformed_eq_names}", reply_markup=keyboard_interface, parse_mode="Markdown")
+    username = user.get_user(user_id)['username']
+    user_name = f'@{username}' if username is not None else f'[{user_id}]\
+(tg://user?id={user_id})'
+    await bot.send_message(
+        chat_id=admin_id,
+        text=f"Подтвердите передачу техники к {user_name}.\
+ Список техники:\n{transformed_eq_names}",
+        reply_markup=keyboard_interface, parse_mode="Markdown")
 
+@dp.callback_query_handler(lambda call: call.data == "return_eq")
+@buttons.delete_message
+async def return_equipment(call: types.CallbackQuery):
+    """
+    Return all equipment
+    """
+    user_eq_data = equipment.get_equipment_by_holder(call.message.chat.id)
+    # create transfer from user to storehouse
+    for eq in user_eq_data:
+        transfer.create_transfer(eq['id'], eq['holder']['id'], 1)
+    # move transfer into history
+    user_transfers = [transfer.get_transfer_by_equipment_id(eq['id'])['id']
+                      for eq in user_eq_data]
+    list(map(transfer.verify_transfer, user_transfers))
+    list(map(transfer.delete_transfer, user_transfers))
+
+    transformed_result = parse_my_equipment_data(user_eq_data)
+    username = call.message.chat.username or user.get_user(
+        call.message.chat.id)['username']
+    user_id = call.message.chat.id
+    for admin in user.get_admin_list():
+        await bot.send_message(
+            chat_id=admin['id'],
+            text='{} вернул(а) данную технику:\n{}'.format(
+                f'@{username}' if username is not None
+                else f'[{user_id}](tg://user?id={user_id})',
+                transformed_result))
+    await bot.send_message(
+        chat_id=user_id,
+        text=f'Данная техника была успешно возвращена:\n{transformed_result}\
+\n\nЧтобы вернуться в главное меню напишите /start')
