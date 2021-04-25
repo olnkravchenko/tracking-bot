@@ -113,9 +113,16 @@ async def admin_menu(call: types.CallbackQuery):
     Admin panel
     """
     admin_markup = buttons.create_inline_markup(
-        [{'text':'Добавить технику','callback':'add_eq'},
-        {'text':'Удалить технику','callback':'delete_eq'},
-        {'text':'Удалить пользователя','callback':'delete_user'}, {'text':'Вернуться назад', 'callback':'start_menu'}], row_width=2)
+        [{'text': 'Добавить технику', 'callback': 'add_eq'},
+         {'text': 'Удалить технику', 'callback': 'delete_eq'},
+         {'text': 'Удалить пользователя', 'callback': 'delete_user'},
+         {'text': 'Изменить описание техники', 'callback': 'change_desc'},
+         {'text': 'Вернуться назад', 'callback': 'start_menu'}], row_width=2)
+
+    await bot.send_message(chat_id=call.message.chat.id,
+                           text='Привет! Выберите действие ниже',
+                           reply_markup=admin_markup)
+
 
 def check_username(message: types.Message):
     """
