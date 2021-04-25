@@ -6,9 +6,11 @@ def create_category(name: str):
     cat = Category.create(name=name)
 
 
-def delete_category(id: int) -> bool:
-    Category.delete().where(Category.id == id)
-    return True
+def delete_category(id: int):
+    try:
+        Category.delete().where(Category.id == id).execute()
+    except Category.DoesNotExist:
+        raise CategoryDoesNotExist(f'Category with id {id} does not exist')
 
 
 def get_category_equipment(id: int) -> list:

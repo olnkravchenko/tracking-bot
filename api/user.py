@@ -2,7 +2,7 @@ from db.models import User, History
 from .exceptions import *
 
 
-def create_user(id_: int, name: str, username: str, status: str = 'main_menu', role: str = 'user') -> dict:
+def create_user(id_: int, name: str, username: str, status: str = 'main_menu', role: str = 'user'):
     User.create(id=id_, name=name, username=username, status=status, role=role)
 
 

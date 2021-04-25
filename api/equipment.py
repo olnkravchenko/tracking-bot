@@ -54,9 +54,11 @@ def get_owner(id: int) -> dict:
         raise EquipmentDoesNotExist(f'Equipment with id {id} does not exist')
 
 
-def delete_equipment(id: int) -> bool:
-    Equipment.delete().where(Equipment.id == id)
-    return True
+def delete_equipment(id: int):
+    try:
+        Equipment.delete().where(Equipment.id == id).execute()
+    except Equipment.DoesNotExist:
+        raise EquipmentDoesNotExist(f'Equipment with id {id} does not exist')
 
 
 def change_equipment_description(id: int, new_description: str) -> bool:
