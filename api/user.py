@@ -13,6 +13,13 @@ def get_user(id: int) -> dict:
         raise UserDoesNotExist(f'User with id {id} does not exist')
 
 
+def delete_user(id: int):
+    try:
+        User.delete().where(User.id == id).execute()
+    except User.DoesNotExist:
+        raise UserDoesNotExist(f'User with id {id} does not exist')
+
+
 def get_user_by_username(username: str) -> dict:
     try:
         return User.get(username=username).get_as_dict()

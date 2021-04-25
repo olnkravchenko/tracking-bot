@@ -94,3 +94,10 @@ def get_equipment_by_holder(id: int) -> list:
     except User.DoesNotExist:
         raise UserDoesNotExist(f'User with id {id} does not exist')
     return [eq.get_as_dict() for eq in holder.equipment]
+
+
+def get_equipment_by_name(name: str) -> dict:
+    try:
+        return Equipment.get(name=name).get_as_dict()
+    except Equipment.DoesNotExist:
+        raise EquipmentDoesNotExist(f'Equipment with name {name} does not exist')
