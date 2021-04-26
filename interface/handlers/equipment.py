@@ -23,8 +23,8 @@ async def take_equipment_step_1(call: types.CallbackQuery):
     Request a photo with QR code
     """
     await bot.send_message(chat_id=call.message.chat.id, text='Отправьте фото с\
-QR кодом техники. На одном фото должен быть <b>только один QR код</b>.\nПосле\
-отправки всех QR кодов напишите /ok', parse_mode=types.message.ParseMode.HTML)
+ QR кодом техники. На одном фото должен быть <b>только один QR код</b>.\nПосле\
+ отправки всех QR кодов напишите /ok', parse_mode=types.message.ParseMode.HTML)
     await Take_Equipment.scan_qr_code.set()
     state = dp.current_state()
     await state.update_data(user_items=[], equipment_names=[])
