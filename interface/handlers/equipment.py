@@ -42,7 +42,13 @@ async def take_equipment_step_2(message: types.Message, state: FSMContext):
     eq_buffer = await state.get_data()
     if eq:
         transformed_result = parse_qr_code_data(eq)  # get equipment name
-        if transformed_result not in eq_buffer['equipment_names']:
+        # check if user has already taken that equipment
+        user_eq_data = equipment.get_equipment_by_holder(message.chat.id)
+        get_eq_name = lambda data: data['name']
+        user_eq_names = list(map(get_eq_name, user_eq_data))
+
+        if transformed_result not in eq_buffer['equipment_names'] and\
+        transformed_result not in user_eq_names:
             await bot.send_message(chat_id=message.chat.id,
                                    text=transformed_result)
             if transformed_result != 'Данной техники нет в базе данных':
@@ -67,11 +73,16 @@ async def take_equipment_step_3(message: types.Message, state: FSMContext):
     Ask admins for permission
     """
     eq_buffer = await state.get_data()  # list with equipment ids and names
-    await bot.send_message(chat_id=message.chat.id,
-                           text='Ожидайте подтверждения от администраторов')
-    for admin in user.get_admin_list():
-        await equipment_confirmation(admin['id'], message.chat.id, eq_buffer)
-    await Take_Equipment.next()
+    if eq_buffer['equipment_names']:
+        await bot.send_message(chat_id=message.chat.id,
+                            text='Ожидайте подтверждения от администраторов')
+        for admin in user.get_admin_list():
+            await equipment_confirmation(admin['id'], message.chat.id, eq_buffer)
+        await Take_Equipment.next()
+    else:
+        await bot.send_message(chat_id=message.chat.id,
+                            text='Произошла ошибка. Необходимо отправить хотя\
+ бы 1 QR код. Попробуйте ещё раз')
 
 
 @dp.callback_query_handler(lambda call: call.data == 'conf_success',
@@ -81,7 +92,6 @@ async def take_equipment_step_4_ok(call: types.CallbackQuery,
     """
     Close transfer and add it to the history
     """
-    # TODO: rewrite state with func argument
     # get current state
     user_id = await state.get_data()
     await state.finish()
@@ -100,7 +110,6 @@ async def take_equipment_step_4_fail(call: types.CallbackQuery,
     """
     Close transfer and delete it
     """
-    # TODO: rewrite state with func argument
     # get current state
     user_id = await state.get_data()
     await state.finish()
