@@ -132,3 +132,9 @@ def check_username(message: types.Message):
         user.get_user_by_username(message.chat.username)
     except Exception:
         user.change_username(message.chat.id, message.chat.username)
+
+@dp.message_handler(commands='cancel', state="*")
+async def cancel_current_state(message: types.Message):
+    state = dp.current_state()
+    await state.finish()
+    await bot.send_message(chat_id=message.chat.id, text='\U0001F44C')

@@ -100,6 +100,14 @@ async def add_equipment_step_2(message: types.Message, state: FSMContext):
                                    text=f'Пользователь с тэгом {data[1]} не\
  найден. Начните добавление техники заново\
  и попробуйте ввести id пользователя')
+    elif data[1] == 'Штаб':
+        try:
+            owner_data = user.get_user_by_username(data[1])
+        except Exception:
+            await bot.send_message(chat_id=message.chat.id,
+                                   text=f'Пользователь с тэгом {data[1]} не\
+ найден. Начните добавление техники заново\
+ и попробуйте ввести id пользователя')
     else:
         try:
             owner_data = user.get_user(int(data[1]))
@@ -109,7 +117,7 @@ async def add_equipment_step_2(message: types.Message, state: FSMContext):
  зарегистрировать, чтобы добавить технику.\nДля возвращения в\
  главное меню напишите /start')
     if owner_data:
-        await state.update_data(eq_name=data[0], owner=owner_data['id'])
+        await state.update_data(eq_name=data[0].strip(), owner=owner_data['id'])
         await bot.send_message(chat_id=message.chat.id,
                                text='Выберите категорию для техники',
                                reply_markup=buttons.create_categories_buttons()
@@ -146,7 +154,7 @@ async def add_equipment_step_4(message: types.Message, state: FSMContext):
         equipment.add_equipment(eq_data['category'], eq_data['eq_name'],
                                 eq_data['owner'], eq_data['description'])
         await bot.send_message(chat_id=message.chat.id,
-                               text='Техника была успешно добавлена.\nДля\
+                            text='Техника была успешно добавлена.\nДля\
  возвращения в главное меню напишите /start')
     except Exception:
         await bot.send_message(chat_id=message.chat.id,
