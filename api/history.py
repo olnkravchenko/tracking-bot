@@ -35,9 +35,9 @@ def get_equipment_history(equipment_id: int, count: int = 20) -> list:
         raise exceptions.EquipmentDoesNotExist(f'Equipment with id {equipment_id} does not exist')
 
 
-def get_equipment_history_by_date(equipemnt_id: int, start_day: int, start_month: int, start_year: int, end_day: int, end_month: int, end_year: int) -> list:
+def get_equipment_history_by_date(equipment_id: int, start_day: int, start_month: int, start_year: int, end_day: int, end_month: int, end_year: int) -> list:
     try:
-        eq = Equipment.get(id=equipemnt_id)
+        eq = Equipment.get(id=equipment_id)
         return [row.get_as_dict() for row in History.select().where((History.equipment == eq) & ((date(day=start_day, month=start_month, year=start_year) <= History.date) & (History.date <= date(day=end_day, month=end_month, year=end_year))))]
     except Equipment.DoesNotExist:
         raise exceptions.EquipmentDoesNotExist(f'Equipment with id {equipment_id} does not exist')

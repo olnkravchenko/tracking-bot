@@ -83,7 +83,7 @@ def change_equipment_category(id: int, new_category: int) -> bool:
     return True
 
 
-def validate_control_sum(id: int, sum: str) -> bool:
+def validate_control_sum(id: int, sum: str):
     try:
         return sum == Equipment.get(id=id).control
     except Equipment.DoesNotExist:
