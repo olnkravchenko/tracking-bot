@@ -1,6 +1,7 @@
 from aiogram import types
 from aiogram.dispatcher import FSMContext
 from aiogram.dispatcher.filters.state import State, StatesGroup
+import logging
 
 from interface.init_bot import dp, bot
 from api import user, equipment, qr_code, transfer
@@ -80,49 +81,56 @@ async def take_equipment_step_3(message: types.Message, state: FSMContext):
     if eq_buffer['equipment_names']:
         await bot.send_message(chat_id=message.chat.id,
                             text='Ожидайте подтверждения от администраторов')
+        await Take_Equipment.next()
+        await state.update_data(admin_messages=[])
         for admin in user.get_admin_list():
             await equipment_confirmation(admin['id'], message.chat.id, eq_buffer)
-        await Take_Equipment.next()
     else:
         await bot.send_message(chat_id=message.chat.id,
                             text='Произошла ошибка. Необходимо отправить хотя\
  бы 1 QR код. Попробуйте ещё раз')
 
 
-@dp.callback_query_handler(lambda call: call.data == 'conf_success',
-                           state=Take_Equipment.waiting_for_confirmation)
-async def take_equipment_step_4_ok(call: types.CallbackQuery,
-                                   state: FSMContext):
+@dp.callback_query_handler(lambda call: call.data.startswith('conf_success'))
+async def take_equipment_step_4_ok(call: types.CallbackQuery):
     """
     Close transfer and add it to the history
     """
-    # get current state
-    user_id = await state.get_data()
-    await state.finish()
-    user_id = user_id['user_id']  # get user id
+    # get user id
+    user_id = int(call.data.split()[1])
+    state = dp.current_state(chat=user_id, user=user_id)
+    messages_data = await state.get_data()
+    for message in messages_data['admin_messages']:
+        await bot.delete_message(message.chat.id, message.message_id)
     await bot.send_message(chat_id=user_id, text='Ваша заявка на взятие техники\
  была подтверждена')
     user_transfers = [trans['id']
                       for trans in transfer.get_active_transfers(user_id)]
     list(map(transfer.verify_transfer, user_transfers))
+    await state.finish()
+    logging.info(f'Administrator {call.message.chat.id} accepted equipment\
+ transfer by the user {user_id}')
 
 
-@dp.callback_query_handler(lambda call: call.data == 'conf_failed',
-                           state=Take_Equipment.waiting_for_confirmation)
-async def take_equipment_step_4_fail(call: types.CallbackQuery,
-                                     state: FSMContext):
+@dp.callback_query_handler(lambda call: call.data.startswith('conf_success'))
+async def take_equipment_step_4_fail(call: types.CallbackQuery):
     """
     Close transfer and delete it
     """
-    # get current state
-    user_id = await state.get_data()
-    await state.finish()
-    user_id = user_id['user_id']  # get user id
+    # get user id
+    user_id = int(call.data.split()[1])
+    state = dp.current_state(chat=user_id, user=user_id)
+    messages_data = await state.get_data()
+    for message in messages_data['admin_messages']:
+        await bot.delete_message(message.chat.id, message.message_id)
     await bot.send_message(chat_id=user_id,
                            text='Ваша заявка на взятие техники была отклонена')
     user_transfers = [trans['id']
                       for trans in transfer.get_active_transfers(user_id)]
     list(map(transfer.delete_transfer, user_transfers))
+    await state.finish()
+    logging.info(f'Administrator {call.message.chat.id} declined equipment\
+ transfer by the user {user_id}')
 
 
 async def read_qr_code(message: types.Message) -> str:
@@ -146,24 +154,28 @@ async def read_qr_code(message: types.Message) -> str:
     return result
 
 
-# TODO: delete other messages for other admins
 async def equipment_confirmation(admin_id: int, user_id: int, eq_names: list):
     """
     Confirm taking the equipment
     """
     keyboard_interface = buttons.create_inline_markup(
-        [{'text': '\U00002705', 'callback': "conf_success"},
-         {'text': '\U0000274C', 'callback': "conf_failed"}])
+        [{'text': '\U00002705', 'callback': f'conf_success {user_id}'},
+         {'text': '\U0000274C', 'callback': f'conf_failed {user_id}'}])
 
     transformed_eq_names = '\n'.join(eq_names['equipment_names'])
     username = user.get_user(user_id)['username']
     user_name = f'@{username}' if username is not None else f'[{user_id}]\
 (tg://user?id={user_id})'
-    await bot.send_message(
+    # save message data
+    message = await bot.send_message(
         chat_id=admin_id,
         text=f"Подтвердите передачу техники к {user_name}.\
  Список техники:\n{transformed_eq_names}",
         reply_markup=keyboard_interface, parse_mode="Markdown")
+    state = dp.current_state()
+    messages_list = await state.get_data()
+    await state.update_data(
+        admin_messages=messages_list['admin_messages'] + [message])
 
 
 class Scan_QR_Code(StatesGroup):
