@@ -1,4 +1,4 @@
-from api.equipment import get_equipment
+from api.equipment import get_equipment, validate_control_sum
 
 
 def parse_category_equipment_data(source: list) -> str:
@@ -101,3 +101,16 @@ def parse_my_equipment_data(source: list) -> str:
 
 isoformat_to_informal = lambda datetime: f'{datetime.day}.{datetime.month}.\
 {datetime.year}, {datetime.hour}:{datetime.minute}'
+
+
+async def validate_qr_code(qr_code_data: str) -> bool:
+    """
+    Validate control sum of the QR code
+    """
+    # get equipment id and control sum from the QR code date
+    equipment_id = int(qr_code_data.split()[0])
+    control_sum = qr_code_data.split()[1]
+    try:
+        return validate_control_sum(equipment_id, control_sum)
+    except Exception:
+        return False

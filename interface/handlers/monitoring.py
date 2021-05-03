@@ -121,6 +121,7 @@ async def my_equipment(call: types.CallbackQuery):
     Get list of user's equipment
     """
     my_eq_data = equipment.get_equipment_by_holder(call.message.chat.id)
+    my_eq_data.reverse()
     transformed_result = parse.parse_my_equipment_data(my_eq_data)\
         or 'На данный момент у вас нет взятой техники'
     await bot.send_message(chat_id=call.message.chat.id,
@@ -150,27 +151,27 @@ async def equipment_history_step_1(call: types.CallbackQuery):
                     content_types=types.ContentTypes.PHOTO)
 async def equipment_history_step_2(message: types.Message, state: FSMContext):
     """
-    Scan QR code
+    Scan QR code and get equipment history
     """
     # read data from QR code
-    # TODO: validation control sum
     data = await read_qr_code(message)
     if data:
-        try:
+        if not parse.validate_qr_code(data):
+            bot.send_message(chat_id=message.chat.id,
+                             text='Произошла ошибка в считывании QR кода.\
+ Возможно данная техника удалена. Попробуйте ещё раз')
+        else:
             # find equipment history and parse data
             eq_history_data = history.get_equipment_history(
                 int(data.split()[0]))
-        except Exception:
-            transformed_result = 'Техника удалена'
-        else:
             if eq_history_data:
                 transformed_result = parse.parse_equipment_history_data(
                     eq_history_data)
             else:
                 transformed_result = 'История техники пуста'
-        await bot.send_message(
+            await bot.send_message(
             chat_id=message.chat.id,
             text=transformed_result+'\nЧтобы вернуться в главное меню\
  напишите /start',
-            parse_mode=types.message.ParseMode.HTML)
-        await state.finish()
+                parse_mode=types.message.ParseMode.HTML)
+    await state.finish()

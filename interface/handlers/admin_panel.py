@@ -6,6 +6,7 @@ from interface.init_bot import dp, bot
 from api import equipment, category, user
 import interface.buttons as buttons
 from interface.handlers.equipment import read_qr_code
+from interface.parse_data import validate_qr_code
 
 
 class Delete_User(StatesGroup):
@@ -204,14 +205,17 @@ async def delete_eq_by_qrcode(message: types.Message, state: FSMContext):
     """
     Get equipment name from QR code
     """
-    # TODO: validation control sum
     qr_code_data = await read_qr_code(message)
     if qr_code_data:
-        equipment_id = int(qr_code_data.split()[0])
-        equipment.delete_equipment(equipment_id)
-
-        await bot.send_message(chat_id=message.chat.id,
-                               text='Техника была успешно удалена')
+        if not validate_qr_code(qr_code_data):
+            bot.send_message(chat_id=message.chat.id,
+                             text='Произошла ошибка в считывании QR кода.\
+ Попробуйте ещё раз' )
+        else:
+            equipment_id = int(qr_code_data.split()[0])
+            equipment.delete_equipment(equipment_id)
+            await bot.send_message(chat_id=message.chat.id,
+                                   text='Техника была успешно удалена')
     await state.finish()
 
 
@@ -260,17 +264,16 @@ async def change_desc_by_qrcode(message: types.Message, state: FSMContext):
     """
     Get equipment name from QR code
     """
-    # TODO: validation control sum
     qr_code_data = await read_qr_code(message)
     if qr_code_data:
-        equipment_id = int(qr_code_data.split()[0])
-        try:
-            equipment.get_equipment(equipment_id)
-        except Exception:
-            await bot.send_message(chat_id=message.chat.id,
-                                   text='Даной техники не существует')
+        if not validate_qr_code(qr_code_data):
+            bot.send_message(chat_id=message.chat.id,
+                             text='Произошла ошибка в считывании QR кода.\
+ Попробуйте ещё раз' )
             await state.finish()
         else:
+            equipment_id = int(qr_code_data.split()[0])
+            equipment.get_equipment(equipment_id)
             await state.update_data(eq_id=equipment_id)
             await bot.send_message(
                 chat_id=message.chat.id,
