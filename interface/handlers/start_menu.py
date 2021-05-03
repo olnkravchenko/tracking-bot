@@ -1,4 +1,5 @@
 from aiogram import types
+from logging import info, warning
 
 from interface.init_bot import dp, bot
 import interface.buttons as buttons
@@ -25,10 +26,8 @@ async def start_menu(call):
         await bot.send_message(
             chat_id=message.chat.id,
             text='Ожидайте подтверждения от администраторов')
-        for admin in user.get_admin_list():
-            await user_verification.verification(
-                admin_id=admin['id'], user_id=message.chat.id,
-                username=username)  # verify user
+        # verify user
+        await user_verification.notify_admins(message, username)
     if user.is_verified(message.chat.id):
         # check if username in the DB is up to date
         check_username(message)

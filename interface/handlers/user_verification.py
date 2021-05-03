@@ -1,6 +1,6 @@
 from aiogram import types
-from aiogram.dispatcher import FSMContext
 from aiogram.dispatcher.filters.state import State, StatesGroup
+import logging
 
 from interface.init_bot import dp, bot
 import interface.buttons as buttons
@@ -14,7 +14,16 @@ class Verification(StatesGroup):
     waiting_for_action = State()  # step 1
 
 
-# TODO: delete other messages for other admins
+async def notify_admins(message: types.Message, username: str):
+    await Verification.waiting_for_action.set()
+    state = dp.current_state()
+    await state.update_data(admin_messages=[])
+    for admin in user.get_admin_list():
+        await verification(
+        admin_id=admin['id'], user_id=message.chat.id,
+        username=username)
+
+
 async def verification(admin_id: int, user_id: int,
                        username: str = None):
     keyboard_interface = buttons.create_inline_markup(
@@ -27,40 +36,41 @@ async def verification(admin_id: int, user_id: int,
         text=f"Подтвердите пользователя {user_name}",
         reply_markup=keyboard_interface,
         parse_mode="Markdown")
-    # TODO: check states
-    await Verification.waiting_for_action.set()
+    # save message data
     state = dp.current_state()
     messages_list = await state.get_data()
-    print(messages_list)
-    messages_list = messages_list['admin_messages'] if messages_list else []
     await state.update_data(
-        admin_messages=messages_list + [message])
+        admin_messages=messages_list['admin_messages'] + [message])
 
 
 @dp.callback_query_handler(lambda call:
                            call.data.startswith('verification success'))
-# @buttons.delete_message
-async def verification_success(call: types.CallbackQuery, state: FSMContext):
-    state = dp.current_state()
+async def verification_success(call: types.CallbackQuery):
+    # get user id and state with all admin messages
+    user_id = int(call.data.split()[2])
+    state = dp.current_state(chat=user_id, user=user_id)
     messages_data = await state.get_data()
     for message in messages_data['admin_messages']:
         await bot.delete_message(message.chat.id, message.message_id)
-    user_id = int(call.data.split()[2])
     user.verify_user(user_id)
     await bot.send_message(chat_id=user_id, text='Вы получили доступ к боту.\
  Пропишите /start для использования')
     await state.finish()
+    logging.info(f'Administrator {call.message.chat.id} accepted verification\
+ of the user {user_id}')
 
 
 @dp.callback_query_handler(lambda call:
-                           call.data.startswith('verification failed'),
-                           state=Verification.waiting_for_action)
-# @buttons.delete_message
-async def verification_failed(call: types.CallbackQuery, state: FSMContext):
+                           call.data.startswith('verification failed'))
+async def verification_failed(call: types.CallbackQuery):
+    # get user id and state with all admin messages
+    user_id = int(call.data.split()[2])
+    state = dp.current_state(chat=user_id, user=user_id)
     messages_data = await state.get_data()
     for message in messages_data['admin_messages']:
         await bot.delete_message(message.chat.id, message.message_id)
-    user_id = int(call.data.split()[2])
     await bot.send_message(chat_id=user_id,
                            text='Администраторы отклонили вашу заявку')
     await state.finish()
+    logging.info(f'Administrator {call.message.chat.id} declined verification\
+ of the user {user_id}')
