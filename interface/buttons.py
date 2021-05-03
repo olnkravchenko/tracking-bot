@@ -40,7 +40,7 @@ def create_start_menu_buttons(user_id: int):
         )
     if is_admin(user_id):
         start_menu_buttons.append(
-            {'text': '\U0001F9D1 Админская панель', 'callback': 'admin_panel'})
+            {'text': '\U0001F9B8 Админ панель', 'callback': 'admin_panel'})
 
     return create_inline_buttons(start_menu_buttons)
 

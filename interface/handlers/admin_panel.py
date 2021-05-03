@@ -6,6 +6,7 @@ from interface.init_bot import dp, bot
 from api import equipment, category, user
 import interface.buttons as buttons
 from interface.handlers.equipment import read_qr_code
+from interface.parse_data import validate_qr_code
 
 
 class Delete_User(StatesGroup):
@@ -100,6 +101,14 @@ async def add_equipment_step_2(message: types.Message, state: FSMContext):
                                    text=f'Пользователь с тэгом {data[1]} не\
  найден. Начните добавление техники заново\
  и попробуйте ввести id пользователя')
+    elif data[1] == 'Штаб':
+        try:
+            owner_data = user.get_user_by_username(data[1])
+        except Exception:
+            await bot.send_message(chat_id=message.chat.id,
+                                   text=f'Пользователь с тэгом {data[1]} не\
+ найден. Начните добавление техники заново\
+ и попробуйте ввести id пользователя')
     else:
         try:
             owner_data = user.get_user(int(data[1]))
@@ -109,7 +118,7 @@ async def add_equipment_step_2(message: types.Message, state: FSMContext):
  зарегистрировать, чтобы добавить технику.\nДля возвращения в\
  главное меню напишите /start')
     if owner_data:
-        await state.update_data(eq_name=data[0], owner=owner_data['id'])
+        await state.update_data(eq_name=data[0].strip(), owner=owner_data['id'])
         await bot.send_message(chat_id=message.chat.id,
                                text='Выберите категорию для техники',
                                reply_markup=buttons.create_categories_buttons()
@@ -146,7 +155,7 @@ async def add_equipment_step_4(message: types.Message, state: FSMContext):
         equipment.add_equipment(eq_data['category'], eq_data['eq_name'],
                                 eq_data['owner'], eq_data['description'])
         await bot.send_message(chat_id=message.chat.id,
-                               text='Техника была успешно добавлена.\nДля\
+                            text='Техника была успешно добавлена.\nДля\
  возвращения в главное меню напишите /start')
     except Exception:
         await bot.send_message(chat_id=message.chat.id,
@@ -196,14 +205,17 @@ async def delete_eq_by_qrcode(message: types.Message, state: FSMContext):
     """
     Get equipment name from QR code
     """
-    # TODO: validation control sum
     qr_code_data = await read_qr_code(message)
     if qr_code_data:
-        equipment_id = int(qr_code_data.split()[0])
-        equipment.delete_equipment(equipment_id)
-
-        await bot.send_message(chat_id=message.chat.id,
-                               text='Техника была успешно удалена')
+        if not validate_qr_code(qr_code_data):
+            bot.send_message(chat_id=message.chat.id,
+                             text='Произошла ошибка в считывании QR кода.\
+ Попробуйте ещё раз' )
+        else:
+            equipment_id = int(qr_code_data.split()[0])
+            equipment.delete_equipment(equipment_id)
+            await bot.send_message(chat_id=message.chat.id,
+                                   text='Техника была успешно удалена')
     await state.finish()
 
 
@@ -252,17 +264,16 @@ async def change_desc_by_qrcode(message: types.Message, state: FSMContext):
     """
     Get equipment name from QR code
     """
-    # TODO: validation control sum
     qr_code_data = await read_qr_code(message)
     if qr_code_data:
-        equipment_id = int(qr_code_data.split()[0])
-        try:
-            equipment.get_equipment(equipment_id)
-        except Exception:
-            await bot.send_message(chat_id=message.chat.id,
-                                   text='Даной техники не существует')
+        if not validate_qr_code(qr_code_data):
+            bot.send_message(chat_id=message.chat.id,
+                             text='Произошла ошибка в считывании QR кода.\
+ Попробуйте ещё раз' )
             await state.finish()
         else:
+            equipment_id = int(qr_code_data.split()[0])
+            equipment.get_equipment(equipment_id)
             await state.update_data(eq_id=equipment_id)
             await bot.send_message(
                 chat_id=message.chat.id,

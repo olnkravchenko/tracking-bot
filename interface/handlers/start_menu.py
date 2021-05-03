@@ -1,4 +1,5 @@
 from aiogram import types
+from logging import info, warning
 
 from interface.init_bot import dp, bot
 import interface.buttons as buttons
@@ -25,10 +26,8 @@ async def start_menu(call):
         await bot.send_message(
             chat_id=message.chat.id,
             text='Ожидайте подтверждения от администраторов')
-        for admin in user.get_admin_list():
-            await user_verification.verification(
-                admin_id=admin['id'], user_id=message.chat.id,
-                username=username)  # verify user
+        # verify user
+        await user_verification.notify_admins(message, username)
     if user.is_verified(message.chat.id):
         # check if username in the DB is up to date
         check_username(message)
@@ -132,3 +131,14 @@ def check_username(message: types.Message):
         user.get_user_by_username(message.chat.username)
     except Exception:
         user.change_username(message.chat.id, message.chat.username)
+
+
+@dp.message_handler(commands='cancel', state="*")
+async def cancel_current_state(message: types.Message):
+    """
+    Allow user to cancel any action
+    """
+    state = dp.current_state()
+    info(f'Cancelling state ({state}) by {message.chat.id}...')
+    await state.finish()
+    await bot.send_message(chat_id=message.chat.id, text='\U0001F44C')

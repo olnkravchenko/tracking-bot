@@ -2,6 +2,7 @@ from db.models import Equipment, Category, User
 from .qr_code import new_qr_code
 from string import ascii_letters
 from random import choice
+from os import remove
 from .exceptions import *
 
 
@@ -26,9 +27,9 @@ def add_equipment(
         raise UserDoesNotExist(f'User with id {owner} does not exist')
     except Category.DoesNotExist:
         raise CategoryDoesNotExist(f'Category with id {category_id} does not exist')
-    filename = f"{eq.id}_qr.png"
+    filename = f'{eq.id}_qr.png'
     new_qr_code(
-        data_=f"{eq.id} {control}", ver=qr_code_version, size=qr_code_version, filename=filename
+        data_=f'{eq.id} {control}', ver=qr_code_version, size=qr_code_version, filename=filename
     )
     return filename
 
@@ -57,6 +58,7 @@ def get_owner(id: int) -> dict:
 def delete_equipment(id: int):
     try:
         Equipment.delete().where(Equipment.id == id).execute()
+        remove(f'./images/qr_codes/{id}_qr.png')
     except Equipment.DoesNotExist:
         raise EquipmentDoesNotExist(f'Equipment with id {id} does not exist')
 
@@ -81,7 +83,7 @@ def change_equipment_category(id: int, new_category: int) -> bool:
     return True
 
 
-def validate_control_sum(id: int, sum: str) -> bool:
+def validate_control_sum(id: int, sum: str):
     try:
         return sum == Equipment.get(id=id).control
     except Equipment.DoesNotExist:
