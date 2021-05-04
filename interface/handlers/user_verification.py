@@ -34,8 +34,7 @@ async def verification(admin_id: int, user_id: int,
     message = await bot.send_message(
         chat_id=admin_id,
         text=f"Подтвердите пользователя {user_name}",
-        reply_markup=keyboard_interface,
-        parse_mode="Markdown")
+        reply_markup=keyboard_interface)
     # save message data
     state = dp.current_state()
     messages_list = await state.get_data()

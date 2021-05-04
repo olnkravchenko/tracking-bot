@@ -107,10 +107,14 @@ def validate_qr_code(qr_code_data: str) -> bool:
     """
     Validate control sum of the QR code
     """
-    # get equipment id and control sum from the QR code date
-    equipment_id = int(qr_code_data.split()[0])
-    control_sum = qr_code_data.split()[1]
-    try:
-        return validate_control_sum(equipment_id, control_sum)
-    except Exception:
+    # get equipment id and control sum from the QR code data
+    split_data = qr_code_data.split()
+    if len(split_data) == 2 and isinstance(qr_code_data.split()[0], int):
+        equipment_id = int(qr_code_data.split()[0])
+        control_sum = qr_code_data.split()[1]
+        try:
+            return validate_control_sum(equipment_id, control_sum)
+        except Exception:
+            return False
+    else:
         return False

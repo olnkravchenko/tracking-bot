@@ -42,7 +42,7 @@ async def take_equipment_step_2(message: types.Message, state: FSMContext):
     eq_buffer = await state.get_data()
     if eq:
         if not validate_qr_code(eq):
-            bot.send_message(chat_id=message.chat.id,
+            await bot.send_message(chat_id=message.chat.id,
                              text='Произошла ошибка в считывании QR кода.\
  Попробуйте ещё раз' ) 
         else:
@@ -214,13 +214,13 @@ async def scan_qr_code_step_2(message: types.Message, state: FSMContext):
     data = await read_qr_code(message)
     if data:
         if not validate_qr_code(data):
-            bot.send_message(chat_id=message.chat.id,
+            await bot.send_message(chat_id=message.chat.id,
                              text='Произошла ошибка в считывании QR кода.\
  Попробуйте ещё раз' )
         else:
             result = parse_qr_code_data(data)
             await bot.send_message(chat_id=message.chat.id, text=result)
-        await state.finish()
+    await state.finish()
 
 
 @dp.callback_query_handler(lambda call: call.data == "return_eq")
