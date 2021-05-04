@@ -63,6 +63,16 @@ def delete_equipment(id: int):
         raise EquipmentDoesNotExist(f'Equipment with id {id} does not exist')
 
 
+def change_equipment_name(id: int, new_name: str) -> bool:
+    try:
+        eq = Equipment.get(id=id)
+    except Equipment.DoesNotExist:
+        raise EquipmentDoesNotExist(f'Equipment with id {id} does not exist')
+    eq.name = new_name
+    eq.save()
+    return True
+
+
 def change_equipment_description(id: int, new_description: str) -> bool:
     try:
         eq = Equipment.get(id=id)
