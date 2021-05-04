@@ -57,8 +57,8 @@ async def verification_success(call: types.CallbackQuery):
     await bot.send_message(chat_id=user_id, text='Вы получили доступ к боту.\
  Пропишите /start для использования')
     await state.finish()
-    logging.info(f'Administrator {call.message.chat.id} accepted verification\
- of the user {user_id}')
+    logging.info(f'[USER VERIFICATION] Administrator {call.message.chat.id}\
+ accepted verification of the user {user_id}')
 
 
 @dp.callback_query_handler(lambda call:
@@ -74,5 +74,5 @@ async def verification_failed(call: types.CallbackQuery):
     await bot.send_message(chat_id=user_id,
                            text='Администраторы отклонили вашу заявку')
     await state.finish()
-    logging.info(f'Administrator {call.message.chat.id} declined verification\
- of the user {user_id}')
+    logging.info(f'[USER VERIFICATION] Administrator {call.message.chat.id}\
+ declined verification of the user {user_id}')

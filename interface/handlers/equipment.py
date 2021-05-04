@@ -112,8 +112,8 @@ async def take_equipment_step_4_ok(call: types.CallbackQuery):
                       for trans in transfer.get_active_transfers(user_id)]
     list(map(transfer.verify_transfer, user_transfers))
     await state.finish()
-    logging.info(f'Administrator {call.message.chat.id} accepted equipment\
- transfer by the user {user_id}')
+    logging.info(f'[TAKING EQUIPMENT] Administrator {call.message.chat.id}\
+ accepted equipment transfer by the user {user_id}')
 
 
 @dp.callback_query_handler(lambda call: call.data.startswith('conf_failed'),
@@ -137,8 +137,8 @@ async def take_equipment_step_4_fail(call: types.CallbackQuery):
                       for trans in transfer.get_active_transfers(user_id)]
     list(map(transfer.delete_transfer, user_transfers))
     await state.finish()
-    logging.info(f'Administrator {call.message.chat.id} declined equipment\
- transfer by the user {user_id}')
+    logging.info(f'[TAKING EQUIPMENT] Administrator {call.message.chat.id}\
+ declined equipment transfer by the user {user_id}')
 
 
 async def read_qr_code(message: types.Message) -> str:

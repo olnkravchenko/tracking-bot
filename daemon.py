@@ -51,11 +51,12 @@ def find_unreturned() -> dict:
     Find users which didn't return the equipment
     """
     users = {}
-    history_data = ([row['equipment'], row['destination'], row['date']]
+    history_data = ([row['equipment'], row['destination'], row['date'], row['equipment']['owner']]
                     for row in get_taking_history())
     for row in history_data:
         holder = find_final_holder(*row)
-        if holder['id'] != 1:
+        # check if holder is a storehouser or owner
+        if holder['id'] != 1 and holder['id'] != row[3]['id']:
             add_into_dict(users, row)
     return users
 
@@ -69,7 +70,7 @@ def add_into_dict(source: dict, value: list):
 
 async def main():
     users = find_unreturned()
-    logging.info(f'Requesting to return the equipment from: \n{users}')
+    logging.info(f'[UNRETURNED] Requesting to return the equipment from: \n{users}')
     for key in users:
         user_eq = parse_my_equipment_data(users[key])
         user = User.get(id=int(key)).get_as_dict()

@@ -17,7 +17,7 @@ def add_equipment(
     try:
         eq = Equipment.create(
             name=name,
-            holder=User.get(id=owner),
+            holder=User.get(id=1),
             owner=User.get(id=owner),
             description=description,
             category=Category.get(id=category_id),
