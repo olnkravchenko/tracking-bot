@@ -91,7 +91,8 @@ async def take_equipment_step_3(message: types.Message, state: FSMContext):
  бы 1 QR код. Попробуйте ещё раз')
 
 
-@dp.callback_query_handler(lambda call: call.data.startswith('conf_success'))
+@dp.callback_query_handler(lambda call: call.data.startswith('conf_success'),
+                           state = '*')
 async def take_equipment_step_4_ok(call: types.CallbackQuery):
     """
     Close transfer and add it to the history
@@ -100,8 +101,11 @@ async def take_equipment_step_4_ok(call: types.CallbackQuery):
     user_id = int(call.data.split()[1])
     state = dp.current_state(chat=user_id, user=user_id)
     messages_data = await state.get_data()
-    for message in messages_data['admin_messages']:
-        await bot.delete_message(message.chat.id, message.message_id)
+    try:
+        for message in messages_data['admin_messages']:
+            await bot.delete_message(message.chat.id, message.message_id)
+    except Exception:
+        logging.info(f'Deleting messages for {user_id} failed...')
     await bot.send_message(chat_id=user_id, text='Ваша заявка на взятие техники\
  была подтверждена')
     user_transfers = [trans['id']
@@ -112,7 +116,8 @@ async def take_equipment_step_4_ok(call: types.CallbackQuery):
  transfer by the user {user_id}')
 
 
-@dp.callback_query_handler(lambda call: call.data.startswith('conf_success'))
+@dp.callback_query_handler(lambda call: call.data.startswith('conf_failed'),
+                           state = '*')
 async def take_equipment_step_4_fail(call: types.CallbackQuery):
     """
     Close transfer and delete it
@@ -121,8 +126,11 @@ async def take_equipment_step_4_fail(call: types.CallbackQuery):
     user_id = int(call.data.split()[1])
     state = dp.current_state(chat=user_id, user=user_id)
     messages_data = await state.get_data()
-    for message in messages_data['admin_messages']:
-        await bot.delete_message(message.chat.id, message.message_id)
+    try:
+        for message in messages_data['admin_messages']:
+            await bot.delete_message(message.chat.id, message.message_id)
+    except Exception:
+        logging.info(f'Deleting messages for {user_id} failed...')
     await bot.send_message(chat_id=user_id,
                            text='Ваша заявка на взятие техники была отклонена')
     user_transfers = [trans['id']
@@ -144,13 +152,13 @@ async def read_qr_code(message: types.Message) -> str:
     try:
         # read file
         result = qr_code.get_qr_code_data(qr_code.get_file_path(photo_id))
-        # delete file
-        qr_code.delete_file(qr_code.get_file_path(photo_id))
     except Exception:
         result = ''
         await bot.send_message(
             chat_id=message.chat.id,
             text='Произошла ошибка в распознавании фото. Попробуйте ещё раз')
+    # delete file
+    qr_code.delete_file(qr_code.get_file_path(photo_id))
     return result
 
 

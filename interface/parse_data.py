@@ -103,7 +103,7 @@ isoformat_to_informal = lambda datetime: f'{datetime.day}.{datetime.month}.\
 {datetime.year}, {datetime.hour}:{datetime.minute}'
 
 
-async def validate_qr_code(qr_code_data: str) -> bool:
+def validate_qr_code(qr_code_data: str) -> bool:
     """
     Validate control sum of the QR code
     """

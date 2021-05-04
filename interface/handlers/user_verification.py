@@ -44,7 +44,8 @@ async def verification(admin_id: int, user_id: int,
 
 
 @dp.callback_query_handler(lambda call:
-                           call.data.startswith('verification success'))
+                           call.data.startswith('verification success'),
+                           state='*')
 async def verification_success(call: types.CallbackQuery):
     # get user id and state with all admin messages
     user_id = int(call.data.split()[2])
@@ -61,7 +62,8 @@ async def verification_success(call: types.CallbackQuery):
 
 
 @dp.callback_query_handler(lambda call:
-                           call.data.startswith('verification failed'))
+                           call.data.startswith('verification failed'),
+                           state='*')
 async def verification_failed(call: types.CallbackQuery):
     # get user id and state with all admin messages
     user_id = int(call.data.split()[2])
