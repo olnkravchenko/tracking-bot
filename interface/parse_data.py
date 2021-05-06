@@ -109,7 +109,7 @@ def validate_qr_code(qr_code_data: str) -> bool:
     """
     # get equipment id and control sum from the QR code data
     split_data = qr_code_data.split()
-    if len(split_data) == 2 and isinstance(qr_code_data.split()[0], int):
+    if len(split_data) == 2 and qr_code_data.split()[0].isdigit():
         equipment_id = int(qr_code_data.split()[0])
         control_sum = qr_code_data.split()[1]
         try:
