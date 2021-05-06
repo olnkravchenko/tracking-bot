@@ -42,7 +42,7 @@ async def take_equipment_step_2(message: types.Message, state: FSMContext):
     eq_buffer = await state.get_data()
     if eq:
         if not validate_qr_code(eq):
-            bot.send_message(chat_id=message.chat.id,
+            await bot.send_message(chat_id=message.chat.id,
                              text='Произошла ошибка в считывании QR кода.\
  Попробуйте ещё раз' ) 
         else:
@@ -91,7 +91,8 @@ async def take_equipment_step_3(message: types.Message, state: FSMContext):
  бы 1 QR код. Попробуйте ещё раз')
 
 
-@dp.callback_query_handler(lambda call: call.data.startswith('conf_success'))
+@dp.callback_query_handler(lambda call: call.data.startswith('conf_success'),
+                           state = '*')
 async def take_equipment_step_4_ok(call: types.CallbackQuery):
     """
     Close transfer and add it to the history
@@ -100,19 +101,23 @@ async def take_equipment_step_4_ok(call: types.CallbackQuery):
     user_id = int(call.data.split()[1])
     state = dp.current_state(chat=user_id, user=user_id)
     messages_data = await state.get_data()
-    for message in messages_data['admin_messages']:
-        await bot.delete_message(message.chat.id, message.message_id)
+    try:
+        for message in messages_data['admin_messages']:
+            await bot.delete_message(message.chat.id, message.message_id)
+    except Exception:
+        logging.info(f'Deleting messages for {user_id} failed...')
     await bot.send_message(chat_id=user_id, text='Ваша заявка на взятие техники\
  была подтверждена')
     user_transfers = [trans['id']
                       for trans in transfer.get_active_transfers(user_id)]
     list(map(transfer.verify_transfer, user_transfers))
     await state.finish()
-    logging.info(f'Administrator {call.message.chat.id} accepted equipment\
- transfer by the user {user_id}')
+    logging.info(f'[TAKING EQUIPMENT] Administrator {call.message.chat.id}\
+ accepted equipment transfer by the user {user_id}')
 
 
-@dp.callback_query_handler(lambda call: call.data.startswith('conf_success'))
+@dp.callback_query_handler(lambda call: call.data.startswith('conf_failed'),
+                           state = '*')
 async def take_equipment_step_4_fail(call: types.CallbackQuery):
     """
     Close transfer and delete it
@@ -121,16 +126,19 @@ async def take_equipment_step_4_fail(call: types.CallbackQuery):
     user_id = int(call.data.split()[1])
     state = dp.current_state(chat=user_id, user=user_id)
     messages_data = await state.get_data()
-    for message in messages_data['admin_messages']:
-        await bot.delete_message(message.chat.id, message.message_id)
+    try:
+        for message in messages_data['admin_messages']:
+            await bot.delete_message(message.chat.id, message.message_id)
+    except Exception:
+        logging.info(f'Deleting messages for {user_id} failed...')
     await bot.send_message(chat_id=user_id,
                            text='Ваша заявка на взятие техники была отклонена')
     user_transfers = [trans['id']
                       for trans in transfer.get_active_transfers(user_id)]
     list(map(transfer.delete_transfer, user_transfers))
     await state.finish()
-    logging.info(f'Administrator {call.message.chat.id} declined equipment\
- transfer by the user {user_id}')
+    logging.info(f'[TAKING EQUIPMENT] Administrator {call.message.chat.id}\
+ declined equipment transfer by the user {user_id}')
 
 
 async def read_qr_code(message: types.Message) -> str:
@@ -144,13 +152,13 @@ async def read_qr_code(message: types.Message) -> str:
     try:
         # read file
         result = qr_code.get_qr_code_data(qr_code.get_file_path(photo_id))
-        # delete file
-        qr_code.delete_file(qr_code.get_file_path(photo_id))
     except Exception:
         result = ''
         await bot.send_message(
             chat_id=message.chat.id,
             text='Произошла ошибка в распознавании фото. Попробуйте ещё раз')
+    # delete file
+    qr_code.delete_file(qr_code.get_file_path(photo_id))
     return result
 
 
@@ -206,13 +214,13 @@ async def scan_qr_code_step_2(message: types.Message, state: FSMContext):
     data = await read_qr_code(message)
     if data:
         if not validate_qr_code(data):
-            bot.send_message(chat_id=message.chat.id,
+            await bot.send_message(chat_id=message.chat.id,
                              text='Произошла ошибка в считывании QR кода.\
  Попробуйте ещё раз' )
         else:
             result = parse_qr_code_data(data)
             await bot.send_message(chat_id=message.chat.id, text=result)
-        await state.finish()
+    await state.finish()
 
 
 @dp.callback_query_handler(lambda call: call.data == "return_eq")

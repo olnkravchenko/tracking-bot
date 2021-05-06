@@ -103,14 +103,18 @@ isoformat_to_informal = lambda datetime: f'{datetime.day}.{datetime.month}.\
 {datetime.year}, {datetime.hour}:{datetime.minute}'
 
 
-async def validate_qr_code(qr_code_data: str) -> bool:
+def validate_qr_code(qr_code_data: str) -> bool:
     """
     Validate control sum of the QR code
     """
-    # get equipment id and control sum from the QR code date
-    equipment_id = int(qr_code_data.split()[0])
-    control_sum = qr_code_data.split()[1]
-    try:
-        return validate_control_sum(equipment_id, control_sum)
-    except Exception:
+    # get equipment id and control sum from the QR code data
+    split_data = qr_code_data.split()
+    if len(split_data) == 2 and qr_code_data.split()[0].isdigit():
+        equipment_id = int(qr_code_data.split()[0])
+        control_sum = qr_code_data.split()[1]
+        try:
+            return validate_control_sum(equipment_id, control_sum)
+        except Exception:
+            return False
+    else:
         return False

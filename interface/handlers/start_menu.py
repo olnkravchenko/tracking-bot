@@ -115,7 +115,8 @@ async def admin_menu(call: types.CallbackQuery):
         [{'text': 'Добавить технику', 'callback': 'add_eq'},
          {'text': 'Удалить технику', 'callback': 'delete_eq'},
          {'text': 'Удалить пользователя', 'callback': 'delete_user'},
-         {'text': 'Изменить описание техники', 'callback': 'change_desc'},
+         {'text': 'Изменить название', 'callback': 'change_name'},
+         {'text': 'Изменить описание', 'callback': 'change_desc'},
          {'text': 'Вернуться назад', 'callback': 'start_menu'}], row_width=2)
 
     await bot.send_message(chat_id=call.message.chat.id,
@@ -139,6 +140,6 @@ async def cancel_current_state(message: types.Message):
     Allow user to cancel any action
     """
     state = dp.current_state()
-    info(f'Cancelling state ({state}) by {message.chat.id}...')
+    info(f'[CANCELLING] Cancelling state ({state}) by {message.chat.id}...')
     await state.finish()
     await bot.send_message(chat_id=message.chat.id, text='\U0001F44C')

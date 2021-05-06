@@ -17,7 +17,7 @@ def add_equipment(
     try:
         eq = Equipment.create(
             name=name,
-            holder=User.get(id=owner),
+            holder=User.get(id=1),
             owner=User.get(id=owner),
             description=description,
             category=Category.get(id=category_id),
@@ -61,6 +61,16 @@ def delete_equipment(id: int):
         remove(f'./images/qr_codes/{id}_qr.png')
     except Equipment.DoesNotExist:
         raise EquipmentDoesNotExist(f'Equipment with id {id} does not exist')
+
+
+def change_equipment_name(id: int, new_name: str) -> bool:
+    try:
+        eq = Equipment.get(id=id)
+    except Equipment.DoesNotExist:
+        raise EquipmentDoesNotExist(f'Equipment with id {id} does not exist')
+    eq.name = new_name
+    eq.save()
+    return True
 
 
 def change_equipment_description(id: int, new_description: str) -> bool:

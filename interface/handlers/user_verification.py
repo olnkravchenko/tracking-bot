@@ -34,8 +34,7 @@ async def verification(admin_id: int, user_id: int,
     message = await bot.send_message(
         chat_id=admin_id,
         text=f"Подтвердите пользователя {user_name}",
-        reply_markup=keyboard_interface,
-        parse_mode="Markdown")
+        reply_markup=keyboard_interface)
     # save message data
     state = dp.current_state()
     messages_list = await state.get_data()
@@ -44,7 +43,8 @@ async def verification(admin_id: int, user_id: int,
 
 
 @dp.callback_query_handler(lambda call:
-                           call.data.startswith('verification success'))
+                           call.data.startswith('verification success'),
+                           state='*')
 async def verification_success(call: types.CallbackQuery):
     # get user id and state with all admin messages
     user_id = int(call.data.split()[2])
@@ -56,12 +56,13 @@ async def verification_success(call: types.CallbackQuery):
     await bot.send_message(chat_id=user_id, text='Вы получили доступ к боту.\
  Пропишите /start для использования')
     await state.finish()
-    logging.info(f'Administrator {call.message.chat.id} accepted verification\
- of the user {user_id}')
+    logging.info(f'[USER VERIFICATION] Administrator {call.message.chat.id}\
+ accepted verification of the user {user_id}')
 
 
 @dp.callback_query_handler(lambda call:
-                           call.data.startswith('verification failed'))
+                           call.data.startswith('verification failed'),
+                           state='*')
 async def verification_failed(call: types.CallbackQuery):
     # get user id and state with all admin messages
     user_id = int(call.data.split()[2])
@@ -72,5 +73,5 @@ async def verification_failed(call: types.CallbackQuery):
     await bot.send_message(chat_id=user_id,
                            text='Администраторы отклонили вашу заявку')
     await state.finish()
-    logging.info(f'Administrator {call.message.chat.id} declined verification\
- of the user {user_id}')
+    logging.info(f'[USER VERIFICATION] Administrator {call.message.chat.id}\
+ declined verification of the user {user_id}')

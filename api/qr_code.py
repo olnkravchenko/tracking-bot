@@ -30,7 +30,7 @@ def new_qr_code(data_, filename, ver=1, err_cor=qrcode.constants.ERROR_CORRECT_H
 
 
 def save_photo(file: BytesIO, filename: str):
-    with open(f'./images/{filename}.jpg', 'wb') as out:
+    with open(get_file_path(filename), 'wb') as out:
         out.write(file.getbuffer())
 
 

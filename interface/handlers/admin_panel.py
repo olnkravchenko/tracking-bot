@@ -29,14 +29,14 @@ async def delete_user_step_1(call: types.CallbackQuery):
     await Delete_User.waiting_for_user_id.set()
 
 
-@dp.message_handler(state=Delete_User.waiting_for_user_id,
+@dp.message_handler(lambda message: not message.text.startswith('/'),
+                    state=Delete_User.waiting_for_user_id,
                     content_types=types.ContentTypes.TEXT)
 async def delete_user_step_2(message: types.Message, state: FSMContext):
     """
     Get user name or id
     """
     exception_msg = ''
-
     if message.text.startswith('@'):
         try:
             user_data = user.get_user_by_username(message.text[1:])['id']
@@ -83,7 +83,8 @@ async def add_equipment_step_1(call: types.CallbackQuery):
     await Add_Equipment.waiting_for_eq_name_and_owner.set()
 
 
-@dp.message_handler(state=Add_Equipment.waiting_for_eq_name_and_owner,
+@dp.message_handler(lambda message: not message.text.startswith('/'),
+                    state=Add_Equipment.waiting_for_eq_name_and_owner,
                     content_types=types.ContentTypes.TEXT)
 async def add_equipment_step_2(message: types.Message, state: FSMContext):
     """
@@ -142,7 +143,8 @@ async def add_equipment_step_3(call: types.CallbackQuery, state: FSMContext):
     await Add_Equipment.next()
 
 
-@dp.message_handler(state=Add_Equipment.waiting_for_description,
+@dp.message_handler(lambda message: not message.text.startswith('/'),
+                    state=Add_Equipment.waiting_for_description,
                     content_types=types.ContentTypes.TEXT)
 async def add_equipment_step_4(message: types.Message, state: FSMContext):
     """
@@ -180,7 +182,8 @@ async def delete_equipment_step_1(call: types.CallbackQuery):
     await Delete_Equipment.waiting_for_equipment_info.set()
 
 
-@dp.message_handler(state=Delete_Equipment.waiting_for_equipment_info,
+@dp.message_handler(lambda message: not message.text.startswith('/'),
+                    state=Delete_Equipment.waiting_for_equipment_info,
                     content_types=types.ContentTypes.TEXT)
 async def delete_eq_by_name(message: types.Message, state: FSMContext):
     """
@@ -208,7 +211,7 @@ async def delete_eq_by_qrcode(message: types.Message, state: FSMContext):
     qr_code_data = await read_qr_code(message)
     if qr_code_data:
         if not validate_qr_code(qr_code_data):
-            bot.send_message(chat_id=message.chat.id,
+            await bot.send_message(chat_id=message.chat.id,
                              text='Произошла ошибка в считывании QR кода.\
  Попробуйте ещё раз' )
         else:
@@ -238,7 +241,8 @@ async def change_desc_step_1(call: types.CallbackQuery):
     await Change_Description.waiting_for_equipment_info.set()
 
 
-@dp.message_handler(state=Change_Description.waiting_for_equipment_info,
+@dp.message_handler(lambda message: not message.text.startswith('/'),
+                    state=Change_Description.waiting_for_equipment_info,
                     content_types=types.ContentTypes.TEXT)
 async def change_desc_by_name(message: types.Message, state: FSMContext):
     """
@@ -267,7 +271,7 @@ async def change_desc_by_qrcode(message: types.Message, state: FSMContext):
     qr_code_data = await read_qr_code(message)
     if qr_code_data:
         if not validate_qr_code(qr_code_data):
-            bot.send_message(chat_id=message.chat.id,
+            await bot.send_message(chat_id=message.chat.id,
                              text='Произошла ошибка в считывании QR кода.\
  Попробуйте ещё раз' )
             await state.finish()
@@ -281,7 +285,8 @@ async def change_desc_by_qrcode(message: types.Message, state: FSMContext):
             await Change_Description.next()
 
 
-@dp.message_handler(state=Change_Description.waiting_for_description,
+@dp.message_handler(lambda message: not message.text.startswith('/'),
+                    state=Change_Description.waiting_for_description,
                     content_types=types.ContentTypes.TEXT)
 async def change_desc_step_3(message: types.Message, state: FSMContext):
     """
@@ -292,4 +297,83 @@ async def change_desc_step_3(message: types.Message, state: FSMContext):
     equipment.change_equipment_description(eq_id, message.text)
     await bot.send_message(chat_id=message.chat.id,
                            text='Описание техники было успешно изменено')
+    await state.finish()
+
+
+class Change_Name(StatesGroup):
+    """
+    Use states as events for changing name of equipment
+    """
+    waiting_for_equipment_info = State()  # step 1
+    waiting_for_name = State()  # step 2
+
+
+@dp.callback_query_handler(lambda call: call.data == 'change_name')
+@buttons.delete_message
+async def change_name_step_1(call: types.CallbackQuery):
+    """
+    Start changing name of the equipment
+    """
+    await bot.send_message(chat_id=call.message.chat.id,
+                           text='Отправьте полное название техники или QR код')
+    await Change_Name.waiting_for_equipment_info.set()
+
+
+@dp.message_handler(lambda message: not message.text.startswith('/'),
+                    state=Change_Name.waiting_for_equipment_info,
+                    content_types=types.ContentTypes.TEXT)
+async def change_name_by_name(message: types.Message, state: FSMContext):
+    """
+    Get equipment name
+    """
+    try:
+        equipment_id = equipment.get_equipment_by_name(message.text)['id']
+    except Exception:
+        await bot.send_message(chat_id=message.chat.id,
+                               text=f'Техники с названием "{message.text}"\
+ не существует')
+        await state.finish()
+    else:
+        await state.update_data(eq_id=equipment_id)
+        await bot.send_message(
+            chat_id=message.chat.id,
+            text='Отправьте новое название техники (5-6 слов)')
+        await Change_Name.next()
+
+
+@dp.message_handler(state=Change_Name.waiting_for_equipment_info,
+                    content_types=types.ContentTypes.PHOTO)
+async def change_name_by_qrcode(message: types.Message, state: FSMContext):
+    """
+    Get equipment name from QR code
+    """
+    qr_code_data = await read_qr_code(message)
+    if qr_code_data:
+        if not validate_qr_code(qr_code_data):
+            await bot.send_message(chat_id=message.chat.id,
+                             text='Произошла ошибка в считывании QR кода.\
+ Попробуйте ещё раз' )
+            await state.finish()
+        else:
+            equipment_id = int(qr_code_data.split()[0])
+            equipment.get_equipment(equipment_id)
+            await state.update_data(eq_id=equipment_id)
+            await bot.send_message(
+                chat_id=message.chat.id,
+                text='Отправьте новое название техники (5-6 слов)')
+            await Change_Name.next()
+
+
+@dp.message_handler(lambda message: not message.text.startswith('/'),
+                    state=Change_Name.waiting_for_name,
+                    content_types=types.ContentTypes.TEXT)
+async def change_name_step_3(message: types.Message, state: FSMContext):
+    """
+    Get new name of the equipment and change it
+    """
+    eq_id = await state.get_data()
+    eq_id = eq_id['eq_id']
+    equipment.change_equipment_name(eq_id, message.text)
+    await bot.send_message(chat_id=message.chat.id,
+                           text='Название техники было успешно изменено')
     await state.finish()

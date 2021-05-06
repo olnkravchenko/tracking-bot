@@ -28,7 +28,8 @@ async def get_user_history_step_1(call: types.CallbackQuery):
     await Get_User_History.waiting_for_user.set()
 
 
-@dp.message_handler(state=Get_User_History.waiting_for_user,
+@dp.message_handler(lambda message: not message.text.startswith('/'),
+                    state=Get_User_History.waiting_for_user,
                     content_types=types.ContentTypes.TEXT)
 async def get_user_history_step_2(message: types.Message, state: FSMContext):
     """
@@ -79,38 +80,39 @@ async def get_period_history_step_1(call: types.CallbackQuery):
     """
     Start of getting history during specific period
     """
-    today = date.today()
-    yesterday = str(today - timedelta(days=1)).split('-')
-    yesterday.reverse()
-    yesterday = '.'.join(yesterday)
-    today = str(today).split('-')
-    today.reverse()
-    today = '.'.join(today)
     await bot.send_message(
         chat_id=call.message.chat.id,
         text=f'Отправьте начальную и конечную дату с новой строки.\
- Пример:\n{yesterday}\n{today}')
+ Пример:\n20.12.2021\n22.12.2021')
     await Get_Period_History.waiting_for_period.set()
 
 
-@dp.message_handler(state=Get_Period_History.waiting_for_period,
+@dp.message_handler(lambda message: not message.text.startswith('/'),
+                    state=Get_Period_History.waiting_for_period,
                     content_types=types.ContentTypes.TEXT)
 async def get_period_history_step_2(message: types.Message, state: FSMContext):
     """
     Get history during specific period
     """
     data = message.text.split('\n')
-    period_data = history.get_history_by_period(
-        *[int(element)for date in data for element in date.split('.')])
-    if period_data:
-        transformed_result = parse.parse_history_data(period_data)
-        await bot.send_message(
-            chat_id=message.chat.id,
-            text=f"История с {data[0]} по {data[1]}:\n{transformed_result}",
-            parse_mode=types.message.ParseMode.HTML)
-    else:
+    try:
+        period_data = history.get_history_by_period(
+            *[int(element) for date in data for element in date.split('.')])
+    except Exception:
         await bot.send_message(chat_id=message.chat.id,
-                               text=f'История с {data[0]} по {data[1]} пуста.')
+                               text='Введённые даты неправильные. Попробуйте\
+ ещё раз')
+    else:
+        if period_data:
+            transformed_result = parse.parse_history_data(period_data)
+            await bot.send_message(
+                chat_id=message.chat.id,
+                text=f"История с {data[0]} по {data[1]}:\n{transformed_result}",
+                parse_mode=types.message.ParseMode.HTML)
+        else:
+            await bot.send_message(chat_id=message.chat.id,
+                                text=f'История с {data[0]} по {data[1]} пуста.')
+
     await state.finish()
 
 
@@ -157,7 +159,7 @@ async def equipment_history_step_2(message: types.Message, state: FSMContext):
     data = await read_qr_code(message)
     if data:
         if not parse.validate_qr_code(data):
-            bot.send_message(chat_id=message.chat.id,
+            await bot.send_message(chat_id=message.chat.id,
                              text='Произошла ошибка в считывании QR кода.\
  Возможно данная техника удалена. Попробуйте ещё раз')
         else:
