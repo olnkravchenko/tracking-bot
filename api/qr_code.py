@@ -43,7 +43,7 @@ delete_file = lambda filename: remove(filename)
 if __name__ == '__main__':
     control = ['asdasAD123134FGSD','asdas4FGSD', '52352SD', '52352342342SD', '524562111SD', '52352678678SD', '367721Fasdf']
     for index, element in enumerate(control):
-        new_qr_code(f'{index+1} {element}', f'data{index}.png', ver=4, size=4)
+        new_qr_code(f'{index+1} {element}', f'data{index}.png', ver=4, size=3)
     # get_qr_code_data('1.jpg')
     # get_qr_code_data('2.jpg')
     #print(get_qr_code_data('data0.png'))

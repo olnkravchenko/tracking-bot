@@ -40,36 +40,33 @@ async def take_equipment_step_2(message: types.Message, state: FSMContext):
     # read data from user's photo with QR code
     eq = await read_qr_code(message)
     eq_buffer = await state.get_data()
-    if eq:
-        if not validate_qr_code(eq):
-            await bot.send_message(chat_id=message.chat.id,
-                             text='Произошла ошибка в считывании QR кода.\
- Попробуйте ещё раз' ) 
-        else:
-            transformed_result = parse_qr_code_data(eq)  # get equipment name
-            # check if user has already taken that equipment
-            user_eq_data = equipment.get_equipment_by_holder(message.chat.id)
-            get_eq_name = lambda data: data['name']
-            user_eq_names = list(map(get_eq_name, user_eq_data))
+    if not validate_qr_code(eq):
+        await bot.send_message(chat_id=message.chat.id,
+                         text='Произошла ошибка в считывании QR кода.\
+ Попробуйте ещё раз')
+    else:
+        transformed_result = parse_qr_code_data(eq)  # get equipment name
+        # check if user has already taken that equipment
+        user_eq_data = equipment.get_equipment_by_holder(message.chat.id)
+        user_eq_names = [eq['name'] for eq in user_eq_data]
 
-            if transformed_result not in eq_buffer['equipment_names'] and\
-            transformed_result not in user_eq_names:
-                await bot.send_message(chat_id=message.chat.id,
-                                    text=transformed_result)
-                if transformed_result != 'Данной техники нет в базе данных':
-                    # write data to storage
-                    await state.update_data(
-                        user_items=eq_buffer['user_items']+[eq],
-                        equipment_names=eq_buffer['equipment_names']
-                        + [transformed_result],
-                        user_id=message.chat.id)
-                    # create transfer
-                    eq_data = equipment.get_equipment(int(eq.split()[0]))
-                    transfer.create_transfer(eq_data['id'], eq_data['holder']['id'],
-                                            message.chat.id)
-            else:
-                await bot.send_message(chat_id=message.chat.id,
-                                    text='Вы уже взяли данную технику')
+        if transformed_result not in eq_buffer['equipment_names'] and\
+        transformed_result not in user_eq_names:
+            await bot.send_message(chat_id=message.chat.id,
+                                text=transformed_result)
+            # write data to storage
+            await state.update_data(
+                user_items=eq_buffer['user_items']+[eq],
+                equipment_names=eq_buffer['equipment_names']
+                + [transformed_result],
+                user_id=message.chat.id)
+            # create transfer
+            eq_data = equipment.get_equipment(int(eq.split()[0]))
+            transfer.create_transfer(eq_data['id'], eq_data['holder']['id'],
+                                    message.chat.id)
+        else:
+            await bot.send_message(chat_id=message.chat.id,
+                                text='Вы уже взяли данную технику')
 
 
 @dp.message_handler(state=Take_Equipment.scan_qr_code, commands='ok')
@@ -212,14 +209,13 @@ async def scan_qr_code_step_2(message: types.Message, state: FSMContext):
     Scan QR code
     """
     data = await read_qr_code(message)
-    if data:
-        if not validate_qr_code(data):
-            await bot.send_message(chat_id=message.chat.id,
-                             text='Произошла ошибка в считывании QR кода.\
+    if not validate_qr_code(data):
+        await bot.send_message(chat_id=message.chat.id,
+                         text='Произошла ошибка в считывании QR кода.\
  Попробуйте ещё раз' )
-        else:
-            result = parse_qr_code_data(data)
-            await bot.send_message(chat_id=message.chat.id, text=result)
+    else:
+        result = parse_qr_code_data(data)
+        await bot.send_message(chat_id=message.chat.id, text=result)
     await state.finish()
 
 
