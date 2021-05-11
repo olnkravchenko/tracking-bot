@@ -24,8 +24,8 @@ async def take_equipment_step_1(call: types.CallbackQuery):
     Request a photo with QR code
     """
     await bot.send_message(chat_id=call.message.chat.id, text='Отправьте фото с\
- QR кодом техники. На одном фото должен быть <b>только один QR код</b>.\nПосле\
- отправки всех QR кодов напишите /ok', parse_mode=types.message.ParseMode.HTML)
+ QR кодом техники. QR код должен занимать <b>80% фото</b>(это можно сделать с помощью кадрирования). На одном фото должен быть <b>только один QR\
+ код</b>.\nПосле отправки всех QR кодов напишите /ok', parse_mode=types.message.ParseMode.HTML)
     await Take_Equipment.scan_qr_code.set()
     state = dp.current_state()
     await state.update_data(user_items=[], equipment_names=[])
@@ -40,11 +40,7 @@ async def take_equipment_step_2(message: types.Message, state: FSMContext):
     # read data from user's photo with QR code
     eq = await read_qr_code(message)
     eq_buffer = await state.get_data()
-    if not validate_qr_code(eq):
-        await bot.send_message(chat_id=message.chat.id,
-                         text='Произошла ошибка в считывании QR кода.\
- Попробуйте ещё раз')
-    else:
+    if validate_qr_code(eq):
         transformed_result = parse_qr_code_data(eq)  # get equipment name
         # check if user has already taken that equipment
         user_eq_data = equipment.get_equipment_by_holder(message.chat.id)
@@ -67,6 +63,10 @@ async def take_equipment_step_2(message: types.Message, state: FSMContext):
         else:
             await bot.send_message(chat_id=message.chat.id,
                                 text='Вы уже взяли данную технику')
+    else:
+        await bot.send_message(
+            chat_id=message.chat.id,
+            text='Произошла ошибка в распознавании фото. Попробуйте ещё раз')
 
 
 @dp.message_handler(state=Take_Equipment.scan_qr_code, commands='ok')
@@ -197,7 +197,8 @@ async def scan_qr_code_step_1(call: types.CallbackQuery):
     Request a photo with QR code
     """
     await bot.send_message(chat_id=call.message.chat.id, text='Отправьте фото с\
- QR кодом техники. На одном фото должен быть <b>только один QR код</b>',
+ QR кодом техники. QR код должен занимать <b>80% фото</b>(это можно сделать с\
+ помощью кадрирования). На одном фото должен быть <b>только один QR код</b>',
                            parse_mode=types.message.ParseMode.HTML)
     await Scan_QR_Code.scan_qr_code.set()
 
@@ -209,13 +210,13 @@ async def scan_qr_code_step_2(message: types.Message, state: FSMContext):
     Scan QR code
     """
     data = await read_qr_code(message)
-    if not validate_qr_code(data):
-        await bot.send_message(chat_id=message.chat.id,
-                         text='Произошла ошибка в считывании QR кода.\
- Попробуйте ещё раз' )
-    else:
+    if validate_qr_code(data):
         result = parse_qr_code_data(data)
         await bot.send_message(chat_id=message.chat.id, text=result)
+    else:
+        await bot.send_message(
+            chat_id=message.chat.id,
+            text='Произошла ошибка в распознавании фото. Попробуйте ещё раз')
     await state.finish()
 
 

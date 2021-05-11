@@ -144,7 +144,9 @@ async def equipment_history_step_1(call: types.CallbackQuery):
     Start getting history of equipment
     """
     await bot.send_message(chat_id=call.message.chat.id, text='Отправьте\
- фото с QR кодом техники. На одном фото должен быть <b>только один QR код</b>',
+ фото с QR кодом техники. QR код должен занимать <b>80% фото</b>(это можно\
+ сделать с помощью кадрирования). На одном фото должен быть <b>только один QR\
+ код</b>',
                            parse_mode=types.message.ParseMode.HTML)
     await Get_Equipment_History.scan_qr_code.set()
 
@@ -157,11 +159,7 @@ async def equipment_history_step_2(message: types.Message, state: FSMContext):
     """
     # read data from QR code
     data = await read_qr_code(message)
-    if not parse.validate_qr_code(data):
-        await bot.send_message(chat_id=message.chat.id,
-                         text='Произошла ошибка в считывании QR кода.\
- Возможно данная техника удалена. Попробуйте ещё раз')
-    else:
+    if parse.validate_qr_code(data):
         # find equipment history and parse data
         eq_history_data = history.get_equipment_history(
             int(data.split()[0]))
@@ -175,4 +173,8 @@ async def equipment_history_step_2(message: types.Message, state: FSMContext):
         text=transformed_result+'\nЧтобы вернуться в главное меню\
  напишите /start',
             parse_mode=types.message.ParseMode.HTML)
+    else:
+        await bot.send_message(
+            chat_id=message.chat.id,
+            text='Произошла ошибка в распознавании фото. Попробуйте ещё раз')
     await state.finish()
