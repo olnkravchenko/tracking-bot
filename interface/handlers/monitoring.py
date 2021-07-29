@@ -144,7 +144,9 @@ async def equipment_history_step_1(call: types.CallbackQuery):
     Start getting history of equipment
     """
     await bot.send_message(chat_id=call.message.chat.id, text='Отправьте\
- фото с QR кодом техники. На одном фото должен быть <b>только один QR код</b>',
+ фото с QR кодом техники. QR код должен занимать <b>80% фото</b>(это можно\
+ сделать с помощью кадрирования). На одном фото должен быть <b>только один QR\
+ код</b>',
                            parse_mode=types.message.ParseMode.HTML)
     await Get_Equipment_History.scan_qr_code.set()
 
