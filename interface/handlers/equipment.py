@@ -36,8 +36,9 @@ async def take_equipment_step_1(call: types.CallbackQuery):
     await state.update_data(user_items=[], equipment_names=[])
 
 
-@dp.message_handler(state=Take_Equipment.scan_qr_code,
-                    content_types=types.ContentTypes.PHOTO)
+@dp.message_handler(
+    state=Take_Equipment.scan_qr_code, content_types=types.ContentTypes.PHOTO
+)
 async def take_equipment_step_2(message: types.Message, state: FSMContext):
     """
     Get QR code, read data from it and create transfer
