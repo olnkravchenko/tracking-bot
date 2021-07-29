@@ -209,16 +209,15 @@ async def delete_eq_by_qrcode(message: types.Message, state: FSMContext):
     Get equipment name from QR code
     """
     qr_code_data = await read_qr_code(message)
-    if qr_code_data:
-        if not validate_qr_code(qr_code_data):
-            await bot.send_message(chat_id=message.chat.id,
-                             text='Произошла ошибка в считывании QR кода.\
- Попробуйте ещё раз' )
-        else:
-            equipment_id = int(qr_code_data.split()[0])
-            equipment.delete_equipment(equipment_id)
-            await bot.send_message(chat_id=message.chat.id,
-                                   text='Техника была успешно удалена')
+    if validate_qr_code(qr_code_data):
+        equipment_id = int(qr_code_data.split()[0])
+        equipment.delete_equipment(equipment_id)
+        await bot.send_message(chat_id=message.chat.id,
+                               text='Техника была успешно удалена')
+    else: 
+        await bot.send_message(
+            chat_id=message.chat.id,
+            text='Произошла ошибка в распознавании фото. Попробуйте ещё раз')
     await state.finish()
 
 
@@ -269,20 +268,19 @@ async def change_desc_by_qrcode(message: types.Message, state: FSMContext):
     Get equipment name from QR code
     """
     qr_code_data = await read_qr_code(message)
-    if qr_code_data:
-        if not validate_qr_code(qr_code_data):
-            await bot.send_message(chat_id=message.chat.id,
-                             text='Произошла ошибка в считывании QR кода.\
- Попробуйте ещё раз' )
-            await state.finish()
-        else:
-            equipment_id = int(qr_code_data.split()[0])
-            equipment.get_equipment(equipment_id)
-            await state.update_data(eq_id=equipment_id)
-            await bot.send_message(
-                chat_id=message.chat.id,
-                text='Отправьте описание техники (до 30 слов)')
-            await Change_Description.next()
+    if not validate_qr_code(qr_code_data):
+        await bot.send_message(
+            chat_id=message.chat.id,
+            text='Произошла ошибка в распознавании фото. Попробуйте ещё раз')
+        await state.finish()
+    else:
+        equipment_id = int(qr_code_data.split()[0])
+        equipment.get_equipment(equipment_id)
+        await state.update_data(eq_id=equipment_id)
+        await bot.send_message(
+            chat_id=message.chat.id,
+            text='Отправьте описание техники (до 30 слов)')
+        await Change_Description.next()
 
 
 @dp.message_handler(lambda message: not message.text.startswith('/'),
@@ -348,20 +346,19 @@ async def change_name_by_qrcode(message: types.Message, state: FSMContext):
     Get equipment name from QR code
     """
     qr_code_data = await read_qr_code(message)
-    if qr_code_data:
-        if not validate_qr_code(qr_code_data):
-            await bot.send_message(chat_id=message.chat.id,
-                             text='Произошла ошибка в считывании QR кода.\
- Попробуйте ещё раз' )
-            await state.finish()
-        else:
-            equipment_id = int(qr_code_data.split()[0])
-            equipment.get_equipment(equipment_id)
-            await state.update_data(eq_id=equipment_id)
-            await bot.send_message(
-                chat_id=message.chat.id,
-                text='Отправьте новое название техники (5-6 слов)')
-            await Change_Name.next()
+    if not validate_qr_code(qr_code_data):
+        await bot.send_message(
+            chat_id=message.chat.id,
+            text='Произошла ошибка в распознавании фото. Попробуйте ещё раз')
+        await state.finish()
+    else:
+        equipment_id = int(qr_code_data.split()[0])
+        equipment.get_equipment(equipment_id)
+        await state.update_data(eq_id=equipment_id)
+        await bot.send_message(
+            chat_id=message.chat.id,
+            text='Отправьте новое название техники (5-6 слов)')
+        await Change_Name.next()
 
 
 @dp.message_handler(lambda message: not message.text.startswith('/'),
