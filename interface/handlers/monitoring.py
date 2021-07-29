@@ -159,23 +159,22 @@ async def equipment_history_step_2(message: types.Message, state: FSMContext):
     """
     # read data from QR code
     data = await read_qr_code(message)
-    if data:
-        if not parse.validate_qr_code(data):
-            await bot.send_message(chat_id=message.chat.id,
-                             text='Произошла ошибка в считывании QR кода.\
- Возможно данная техника удалена. Попробуйте ещё раз')
+    if parse.validate_qr_code(data):
+        # find equipment history and parse data
+        eq_history_data = history.get_equipment_history(
+            int(data.split()[0]))
+        if eq_history_data:
+            transformed_result = parse.parse_equipment_history_data(
+                eq_history_data)
         else:
-            # find equipment history and parse data
-            eq_history_data = history.get_equipment_history(
-                int(data.split()[0]))
-            if eq_history_data:
-                transformed_result = parse.parse_equipment_history_data(
-                    eq_history_data)
-            else:
-                transformed_result = 'История техники пуста'
-            await bot.send_message(
-            chat_id=message.chat.id,
-            text=transformed_result+'\nЧтобы вернуться в главное меню\
+            transformed_result = 'История техники пуста'
+        await bot.send_message(
+        chat_id=message.chat.id,
+        text=transformed_result+'\nЧтобы вернуться в главное меню\
  напишите /start',
-                parse_mode=types.message.ParseMode.HTML)
+            parse_mode=types.message.ParseMode.HTML)
+    else:
+        await bot.send_message(
+            chat_id=message.chat.id,
+            text='Произошла ошибка в распознавании фото. Попробуйте ещё раз')
     await state.finish()
